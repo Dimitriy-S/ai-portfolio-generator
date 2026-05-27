@@ -45,7 +45,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/generate?prompt=${encodeURIComponent(prompt)}`
+        `https://ai-portfolio-backend-gz83.onrender.com/generate?prompt=${encodeURIComponent(prompt)}`
       );
 
       if (!response.ok) {
