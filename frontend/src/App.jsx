@@ -4,6 +4,13 @@ import Auth from "./Auth";
 import { supabase } from "./lib/supabase";
 
 const API_URL = "https://ai-portfolio-backend-gz83.onrender.com";
+const PORTFOLIO_STYLES = [
+  "Minimal",
+  "Modern",
+  "Corporate",
+  "Creative",
+  "Developer",
+];
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -213,6 +220,8 @@ function PortfolioView({
   showSaveButton,
   saveLoading,
   onSave,
+  improveLoading,
+  onImprove,
   pdfLoading,
   onDownloadPdf,
   theme,
@@ -257,14 +266,25 @@ function PortfolioView({
           </button>
 
           {showSaveButton && (
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={saveLoading}
-              className="rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:shadow-cyan-500/30 disabled:translate-y-0 disabled:bg-neutral-700 disabled:from-neutral-700 disabled:to-neutral-700"
-            >
-              {saveLoading ? "Saving..." : "Save Portfolio"}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onImprove}
+                disabled={improveLoading}
+                className="rounded-2xl bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-5 py-3 font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:-translate-y-0.5 hover:shadow-fuchsia-500/30 disabled:translate-y-0 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-400"
+              >
+                {improveLoading ? "Improving..." : "Improve Portfolio"}
+              </button>
+
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={saveLoading}
+                className="rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:shadow-cyan-500/30 disabled:translate-y-0 disabled:bg-neutral-700 disabled:from-neutral-700 disabled:to-neutral-700"
+              >
+                {saveLoading ? "Saving..." : "Save Portfolio"}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -341,10 +361,12 @@ function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("Minimal");
   const [portfolio, setPortfolio] = useState(null);
   const [savedPortfolios, setSavedPortfolios] = useState([]);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [improveLoading, setImproveLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
@@ -435,7 +457,9 @@ function App() {
 
     try {
       const response = await fetch(
-        `${API_URL}/generate?prompt=${encodeURIComponent(prompt)}`
+        `${API_URL}/generate?prompt=${encodeURIComponent(
+          prompt
+        )}&style=${encodeURIComponent(selectedStyle)}`
       );
 
       if (!response.ok) {
@@ -450,6 +474,49 @@ function App() {
       alert("Ошибка генерации. Проверь backend.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const improvePortfolio = async () => {
+    if (!portfolio) {
+      return;
+    }
+
+    setImproveLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/improve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          portfolio,
+          style: selectedStyle,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Backend returned an error.");
+      }
+
+      const data = await response.json();
+      setPortfolio({
+        ...portfolio,
+        ...data,
+        skills: data.skills?.length ? data.skills : portfolio.skills,
+        contacts: {
+          ...portfolio.contacts,
+          ...data.contacts,
+          phone: data.contacts?.phone ?? portfolio.contacts?.phone ?? "",
+        },
+      });
+      setSelectedPortfolioId(null);
+    } catch (error) {
+      console.error(error);
+      alert("Не удалось улучшить портфолио.");
+    } finally {
+      setImproveLoading(false);
     }
   };
 
@@ -650,6 +717,31 @@ function App() {
                 </span>
               </div>
 
+              <label className="mb-4 block">
+                <span
+                  className={cn(
+                    "mb-2 block text-sm font-semibold",
+                    isDark ? "text-neutral-300" : "text-slate-700"
+                  )}
+                >
+                  Portfolio style
+                </span>
+                <select
+                  value={selectedStyle}
+                  onChange={(event) => setSelectedStyle(event.target.value)}
+                  className={cn(
+                    "w-full rounded-2xl border p-3 outline-none transition",
+                    inputClass
+                  )}
+                >
+                  {PORTFOLIO_STYLES.map((style) => (
+                    <option key={style} value={style}>
+                      {style}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <textarea
                 className={cn(
                   "h-64 w-full resize-none rounded-2xl border p-4 outline-none transition",
@@ -782,6 +874,8 @@ function App() {
                 showSaveButton
                 saveLoading={saveLoading}
                 onSave={savePortfolio}
+                improveLoading={improveLoading}
+                onImprove={improvePortfolio}
                 pdfLoading={pdfLoading}
                 onDownloadPdf={handleDownloadPdf}
                 theme={theme}
