@@ -54,6 +54,38 @@ PORTFOLIO_JSON_STRUCTURE = """
     "github": "",
     "phone": ""
   },
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "period": "",
+      "description": ""
+    }
+  ],
+  "experience": [
+    {
+      "company": "",
+      "role": "",
+      "period": "",
+      "description": ""
+    }
+  ],
+  "languages": [],
+  "achievements": [],
+  "softSkills": [],
+  "certificates": [
+    {
+      "title": "",
+      "issuer": "",
+      "year": ""
+    }
+  ],
+  "links": [
+    {
+      "title": "",
+      "url": ""
+    }
+  ],
   "theme": ""
 }
 """
@@ -94,8 +126,8 @@ def generate_portfolio(prompt: str, style: str = "Minimal", language: str = "uk"
 
 Выбранный стиль портфолио: {style}.
 Язык портфолио: {output_language}.
-Учитывай этот стиль при генерации bio, skills, projects и theme.
-Пиши name, profession, bio, skills, project titles, project descriptions и theme на языке: {output_language}.
+Учитывай этот стиль при генерации bio, skills, projects, education, experience, achievements и theme.
+Пиши name, profession, bio, skills, project titles, project descriptions, education, experience, languages, achievements, softSkills, certificates, links и theme на языке: {output_language}.
 Не смешивай языки.
 
 Обязательно:
@@ -103,6 +135,8 @@ def generate_portfolio(prompt: str, style: str = "Minimal", language: str = "uk"
 - всегда генерируй skills,
 - всегда генерируй хотя бы 1 project,
 - всегда возвращай contacts.email, contacts.github и contacts.phone,
+- всегда возвращай education, experience, languages, achievements, softSkills, certificates и links,
+- если данных для расширенных секций нет — используй пустой массив,
 - если контактов нет — оставляй пустую строку.
 
 Структура:
@@ -147,8 +181,10 @@ def improve_portfolio(request: ImproveRequest):
 - НЕ удаляй contacts,
 - НЕ удаляй contacts.phone,
 - НЕ теряй skills,
+- НЕ теряй education, experience, languages, achievements, softSkills, certificates и links,
+- улучшай education, experience, achievements, certificates и links, если они есть,
 - НЕ меняй структуру JSON.
-- Пиши улучшенный profession, bio, skills, projects и theme на языке: {output_language}.
+- Пиши улучшенный profession, bio, skills, projects, education, experience, languages, achievements, softSkills, certificates, links и theme на языке: {output_language}.
 - Не смешивай языки.
 
 Структура должна остаться:

@@ -56,6 +56,384 @@ const downloadPdf = async (pdfRef, t) => {
   await html2pdf().set(options).from(element).save();
 };
 
+const extendedSections = [
+  { key: "education", titleKey: "education" },
+  { key: "experience", titleKey: "experience" },
+  { key: "languages", titleKey: "languages" },
+  { key: "achievements", titleKey: "achievements" },
+  { key: "softSkills", titleKey: "softSkills" },
+  { key: "certificates", titleKey: "certificates" },
+  { key: "links", titleKey: "links" },
+];
+
+const toList = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  return (Array.isArray(value) ? value : [value]).filter((item) => {
+    if (!item) {
+      return false;
+    }
+
+    if (typeof item === "object") {
+      return Object.values(item).some((part) => String(part || "").trim());
+    }
+
+    return String(item).trim();
+  });
+};
+
+const getItemParts = (item) => {
+  if (!item || typeof item !== "object") {
+    return {
+      title: String(item || ""),
+      meta: "",
+      description: "",
+      url: "",
+    };
+  }
+
+  const title =
+    item.title ||
+    item.name ||
+    item.degree ||
+    item.role ||
+    item.company ||
+    item.institution ||
+    item.language ||
+    item.url ||
+    "";
+
+  const meta = [
+    item.company,
+    item.institution,
+    item.issuer,
+    item.period,
+    item.year,
+    item.level,
+  ]
+    .filter((part) => part && part !== title)
+    .join(" | ");
+
+  const description =
+    item.description ||
+    item.details ||
+    item.summary ||
+    Object.entries(item)
+      .filter(
+        ([key, value]) =>
+          ![
+            "title",
+            "name",
+            "degree",
+            "role",
+            "company",
+            "institution",
+            "language",
+            "url",
+            "issuer",
+            "period",
+            "year",
+            "level",
+            "description",
+            "details",
+            "summary",
+          ].includes(key) && value
+      )
+      .map(([, value]) => String(value))
+      .join(" ");
+
+  return {
+    title: String(title),
+    meta: String(meta),
+    description: String(description),
+    url: item.url || "",
+  };
+};
+
+const escapeHtml = (value) =>
+  String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const renderHtmlList = (items, t) => {
+  const list = toList(items);
+
+  if (list.length === 0) {
+    return `<p class="muted">${escapeHtml(t.notSpecified)}</p>`;
+  }
+
+  return `<ul>${list
+    .map((item) => {
+      const parts = getItemParts(item);
+      const title = parts.url
+        ? `<a href="${escapeHtml(parts.url)}" target="_blank" rel="noreferrer">${escapeHtml(
+            parts.title || parts.url
+          )}</a>`
+        : escapeHtml(parts.title);
+
+      return `<li>
+        <strong>${title}</strong>
+        ${parts.meta ? `<span>${escapeHtml(parts.meta)}</span>` : ""}
+        ${parts.description ? `<p>${escapeHtml(parts.description)}</p>` : ""}
+      </li>`;
+    })
+    .join("")}</ul>`;
+};
+
+const buildPortfolioHtml = (portfolio, t, language) => {
+  const sections = extendedSections
+    .map(
+      (section) => `
+        <section>
+          <h2>${escapeHtml(t[section.titleKey])}</h2>
+          ${renderHtmlList(portfolio[section.key], t)}
+        </section>`
+    )
+    .join("");
+
+  return `<!doctype html>
+<html lang="${language === "uk" ? "uk" : "en"}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(portfolio.name || t.appTitle)}</title>
+    <style>
+      :root {
+        color: #172033;
+        background: #f5f7fb;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f5f7fb; }
+      main { width: min(100%, 980px); margin: 0 auto; padding: 48px 20px; }
+      .page { background: #ffffff; border: 1px solid #dfe5ef; border-radius: 24px; padding: 44px; box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08); }
+      header { border-bottom: 1px solid #e5eaf2; padding-bottom: 24px; margin-bottom: 28px; }
+      h1 { margin: 0; color: #0f172a; font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1; letter-spacing: 0; }
+      h2 { margin: 0 0 14px; color: #111827; font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid #e5eaf2; padding-bottom: 8px; }
+      h3 { margin: 10px 0 0; color: #4b5563; font-size: 1.25rem; font-weight: 500; }
+      p { color: #374151; line-height: 1.7; margin: 0; }
+      section { margin-top: 28px; }
+      ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      li { color: #374151; line-height: 1.6; }
+      li strong { display: block; color: #111827; font-size: 1rem; }
+      li span { display: block; color: #64748b; font-size: 0.95rem; margin-top: 2px; }
+      li p { margin-top: 4px; }
+      a { color: #4f46e5; text-decoration: none; overflow-wrap: anywhere; }
+      a:hover { text-decoration: underline; }
+      .contacts { display: flex; flex-wrap: wrap; gap: 10px 18px; color: #64748b; margin-top: 16px; }
+      .contacts span { overflow-wrap: anywhere; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px 12px; color: #374151; }
+      .chips span:not(:last-child)::after { content: ","; }
+      .muted { color: #94a3b8; }
+      @media (max-width: 640px) {
+        main { padding: 24px 12px; }
+        .page { padding: 26px; border-radius: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <article class="page">
+        <header>
+          <h1>${escapeHtml(portfolio.name || t.appTitle)}</h1>
+          <h3>${escapeHtml(portfolio.profession)}</h3>
+          <div class="contacts">
+            <span>${escapeHtml(t.email)}: ${escapeHtml(portfolio.contacts?.email || t.notSpecified)}</span>
+            <span>${escapeHtml(t.github)}: ${escapeHtml(portfolio.contacts?.github || t.notSpecified)}</span>
+            <span>${escapeHtml(t.phone)}: ${escapeHtml(portfolio.contacts?.phone || t.notSpecified)}</span>
+          </div>
+        </header>
+
+        <section>
+          <h2>${escapeHtml(t.about)}</h2>
+          <p>${escapeHtml(portfolio.bio)}</p>
+        </section>
+
+        <section>
+          <h2>${escapeHtml(t.skills)}</h2>
+          <div class="chips">${toList(portfolio.skills)
+            .map((skill) => `<span>${escapeHtml(getItemParts(skill).title)}</span>`)
+            .join("") || `<span class="muted">${escapeHtml(t.notSpecified)}</span>`}</div>
+        </section>
+
+        <section>
+          <h2>${escapeHtml(t.projects)}</h2>
+          ${renderHtmlList(portfolio.projects, t)}
+        </section>
+
+        <section>
+          <h2>${escapeHtml(t.contacts)}</h2>
+          <p>${escapeHtml(t.email)}: ${escapeHtml(portfolio.contacts?.email || t.notSpecified)}</p>
+          <p>${escapeHtml(t.github)}: ${escapeHtml(portfolio.contacts?.github || t.notSpecified)}</p>
+          <p>${escapeHtml(t.phone)}: ${escapeHtml(portfolio.contacts?.phone || t.notSpecified)}</p>
+        </section>
+
+        ${sections}
+      </article>
+    </main>
+  </body>
+</html>`;
+};
+
+const downloadHtml = (portfolio, t, language) => {
+  const html = buildPortfolioHtml(portfolio, t, language);
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "portfolio.html";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+function PdfExtendedSection({ title, items }) {
+  const list = toList(items);
+
+  if (list.length === 0) {
+    return null;
+  }
+
+  return (
+    <div style={{ marginTop: "28px" }}>
+      <h3
+        style={{
+          borderBottom: "1px solid #e5e7eb",
+          color: "#111827",
+          fontSize: "15px",
+          fontWeight: 700,
+          letterSpacing: "0.4px",
+          margin: "0 0 10px",
+          paddingBottom: "6px",
+          textTransform: "uppercase",
+        }}
+      >
+        {title}
+      </h3>
+      <div>
+        {list.map((item, index) => {
+          const parts = getItemParts(item);
+
+          return (
+            <div key={index} style={{ marginBottom: "12px" }}>
+              <p
+                style={{
+                  color: "#111111",
+                  fontWeight: 700,
+                  margin: "0 0 3px",
+                }}
+              >
+                {parts.title}
+              </p>
+              {parts.meta && (
+                <p style={{ color: "#6b7280", margin: "0 0 3px" }}>
+                  {parts.meta}
+                </p>
+              )}
+              {parts.description && (
+                <p style={{ color: "#333333", margin: 0 }}>
+                  {parts.description}
+                </p>
+              )}
+              {parts.url && (
+                <p style={{ color: "#4f46e5", margin: 0 }}>{parts.url}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ExtendedSection({ title, items, theme }) {
+  const isDark = theme === "dark";
+  const list = toList(items);
+
+  if (list.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <h3 className="mb-4 mt-8 text-2xl font-bold">{title}</h3>
+      <div className="space-y-3">
+        {list.map((item, index) => {
+          const parts = getItemParts(item);
+
+          return (
+            <div
+              key={index}
+              className={cn(
+                "rounded-2xl border p-4",
+                isDark
+                  ? "border-neutral-800 bg-neutral-950/50"
+                  : "border-gray-200 bg-slate-50"
+              )}
+            >
+              {parts.url ? (
+                <a
+                  href={parts.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cn(
+                    "font-semibold hover:underline",
+                    isDark ? "text-cyan-200" : "text-indigo-700"
+                  )}
+                >
+                  {parts.title || parts.url}
+                </a>
+              ) : (
+                <h4 className="font-semibold">{parts.title}</h4>
+              )}
+
+              {parts.meta && (
+                <p
+                  className={cn(
+                    "mt-1 text-sm",
+                    isDark ? "text-neutral-400" : "text-slate-500"
+                  )}
+                >
+                  {parts.meta}
+                </p>
+              )}
+
+              {parts.description && (
+                <p
+                  className={cn(
+                    "mt-2",
+                    isDark ? "text-neutral-300" : "text-slate-600"
+                  )}
+                >
+                  {parts.description}
+                </p>
+              )}
+
+              {parts.url && parts.title !== parts.url && (
+                <p
+                  className={cn(
+                    "mt-2 break-words text-sm",
+                    isDark ? "text-neutral-400" : "text-slate-500"
+                  )}
+                >
+                  {parts.url}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 function PdfPortfolio({ portfolio, exportRef, t }) {
   return (
     <div
@@ -220,6 +598,14 @@ function PdfPortfolio({ portfolio, exportRef, t }) {
             </p>
           </div>
         </div>
+
+        {extendedSections.map((section) => (
+          <PdfExtendedSection
+            key={section.key}
+            title={t[section.titleKey]}
+            items={portfolio[section.key]}
+          />
+        ))}
       </div>
     </div>
   );
@@ -234,6 +620,8 @@ function PortfolioView({
   onImprove,
   pdfLoading,
   onDownloadPdf,
+  htmlLoading,
+  onDownloadHtml,
   theme,
   t,
 }) {
@@ -274,6 +662,20 @@ function PortfolioView({
             )}
           >
             {pdfLoading ? t.preparingPdf : t.downloadPdf}
+          </button>
+
+          <button
+            type="button"
+            onClick={onDownloadHtml}
+            disabled={htmlLoading}
+            className={cn(
+              "rounded-2xl border px-5 py-3 font-semibold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed",
+              isDark
+                ? "border-neutral-700 bg-neutral-900 text-cyan-100 hover:border-cyan-400 disabled:text-neutral-500"
+                : "border-gray-200 bg-white text-indigo-700 shadow-sm hover:border-indigo-300 disabled:text-gray-400"
+            )}
+          >
+            {htmlLoading ? t.preparingHtml : t.downloadHtml}
           </button>
 
           {showSaveButton && (
@@ -362,6 +764,15 @@ function PortfolioView({
         <p>{t.github}: {portfolio.contacts?.github || t.notSpecified}</p>
         <p>{t.phone}: {portfolio.contacts?.phone || t.notSpecified}</p>
       </div>
+
+      {extendedSections.map((section) => (
+        <ExtendedSection
+          key={section.key}
+          title={t[section.titleKey]}
+          items={portfolio[section.key]}
+          theme={theme}
+        />
+      ))}
     </div>
   );
 }
@@ -383,6 +794,7 @@ function App() {
   const [listLoading, setListLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [htmlLoading, setHtmlLoading] = useState(false);
 
   const isDark = theme === "dark";
   const t = translations[language] || translations.uk;
@@ -555,9 +967,20 @@ function App() {
       }
 
       const data = await response.json();
+      const preservedExtendedData = extendedSections.reduce((result, section) => {
+        const nextItems = toList(data[section.key]);
+        const currentItems = toList(portfolio[section.key]);
+
+        return {
+          ...result,
+          [section.key]: nextItems.length ? data[section.key] : currentItems,
+        };
+      }, {});
+
       setPortfolio({
         ...portfolio,
         ...data,
+        ...preservedExtendedData,
         skills: data.skills?.length ? data.skills : portfolio.skills,
         contacts: {
           ...portfolio.contacts,
@@ -627,6 +1050,23 @@ function App() {
       alert(t.pdfCreateError);
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const handleDownloadHtml = () => {
+    if (!portfolio) {
+      return;
+    }
+
+    setHtmlLoading(true);
+
+    try {
+      downloadHtml(portfolio, t, language);
+    } catch (error) {
+      console.error("HTML export error:", error);
+      alert(t.htmlCreateError);
+    } finally {
+      setHtmlLoading(false);
     }
   };
 
@@ -970,6 +1410,8 @@ function App() {
                 onImprove={improvePortfolio}
                 pdfLoading={pdfLoading}
                 onDownloadPdf={handleDownloadPdf}
+                htmlLoading={htmlLoading}
+                onDownloadHtml={handleDownloadHtml}
                 theme={theme}
                 t={t}
               />
