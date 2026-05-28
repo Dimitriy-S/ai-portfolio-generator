@@ -58,54 +58,65 @@ function PdfPortfolio({ portfolio, exportRef }) {
         ref={exportRef}
         style={{
           background: "#ffffff",
-          color: "#111111",
+          color: "#1f2933",
           width: "760px",
-          padding: "40px",
-          fontFamily: "Arial, sans-serif",
-          fontSize: "14px",
-          lineHeight: "1.6",
+          padding: "44px 48px",
+          fontFamily: "Arial, Helvetica, sans-serif",
+          fontSize: "13.5px",
+          lineHeight: "1.55",
         }}
       >
-        <p
+        <div
           style={{
-            color: "#4338ca",
-            fontSize: "12px",
-            fontWeight: 700,
-            letterSpacing: "2px",
-            margin: "0 0 12px",
-            textTransform: "uppercase",
+            borderBottom: "1px solid #d8dee4",
+            marginBottom: "26px",
+            paddingBottom: "18px",
           }}
         >
-          {portfolio.theme || "Portfolio"}
-        </p>
-        <h1
-          style={{
-            color: "#111111",
-            fontSize: "34px",
-            lineHeight: "1.15",
-            margin: "0",
-          }}
-        >
-          {portfolio.name || "Untitled Portfolio"}
-        </h1>
-        <h2
-          style={{
-            color: "#444444",
-            fontSize: "20px",
-            margin: "8px 0 0",
-          }}
-        >
-          {portfolio.profession}
-        </h2>
+          <h1
+            style={{
+              color: "#111827",
+              fontSize: "34px",
+              fontWeight: 700,
+              lineHeight: "1.1",
+              margin: "0",
+            }}
+          >
+            {portfolio.name || "Untitled Portfolio"}
+          </h1>
+          <h2
+            style={{
+              color: "#4b5563",
+              fontSize: "18px",
+              fontWeight: 400,
+              margin: "8px 0 0",
+            }}
+          >
+            {portfolio.profession}
+          </h2>
+          <p
+            style={{
+              color: "#6b7280",
+              fontSize: "12.5px",
+              margin: "12px 0 0",
+            }}
+          >
+            Email: {portfolio.contacts?.email || "Not specified"} · GitHub:{" "}
+            {portfolio.contacts?.github || "Not specified"}
+          </p>
+        </div>
 
-        <div style={{ marginTop: "28px" }}>
+        <div style={{ marginTop: "0" }}>
           <h3
             style={{
-              borderBottom: "1px solid #dddddd",
-              color: "#111111",
-              fontSize: "20px",
-              margin: "0 0 12px",
-              paddingBottom: "8px",
+              borderBottom: "1px solid #e5e7eb",
+              color: "#111827",
+              fontSize: "15px",
+              fontWeight: 700,
+              letterSpacing: "0.4px",
+              margin: "0 0 10px",
+              paddingBottom: "6px",
+              textTransform: "uppercase",
             }}
           >
             About
@@ -116,43 +127,34 @@ function PdfPortfolio({ portfolio, exportRef }) {
         <div style={{ marginTop: "28px" }}>
           <h3
             style={{
-              borderBottom: "1px solid #dddddd",
-              color: "#111111",
-              fontSize: "20px",
-              margin: "0 0 12px",
-              paddingBottom: "8px",
+              borderBottom: "1px solid #e5e7eb",
+              color: "#111827",
+              fontSize: "15px",
+              fontWeight: 700,
+              letterSpacing: "0.4px",
+              margin: "0 0 10px",
+              paddingBottom: "6px",
+              textTransform: "uppercase",
             }}
           >
             Skills
           </h3>
-          <div>
-            {portfolio.skills?.map((skill, index) => (
-              <span
-                key={index}
-                style={{
-                  border: "1px solid #c7d2fe",
-                  borderRadius: "999px",
-                  color: "#3730a3",
-                  display: "inline-block",
-                  fontWeight: 700,
-                  margin: "0 8px 8px 0",
-                  padding: "4px 10px",
-                }}
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
+          <p style={{ color: "#333333", margin: 0 }}>
+            {portfolio.skills?.join(", ")}
+          </p>
         </div>
 
         <div style={{ marginTop: "28px" }}>
           <h3
             style={{
-              borderBottom: "1px solid #dddddd",
-              color: "#111111",
-              fontSize: "20px",
+              borderBottom: "1px solid #e5e7eb",
+              color: "#111827",
+              fontSize: "15px",
+              fontWeight: 700,
+              letterSpacing: "0.4px",
               margin: "0 0 12px",
-              paddingBottom: "8px",
+              paddingBottom: "6px",
+              textTransform: "uppercase",
             }}
           >
             Projects
@@ -162,16 +164,15 @@ function PdfPortfolio({ portfolio, exportRef }) {
               <div
                 key={index}
                 style={{
-                  border: "1px solid #dddddd",
-                  marginBottom: "14px",
-                  padding: "14px",
+                  marginBottom: "18px",
                 }}
               >
                 <h4
                   style={{
                     color: "#111111",
-                    fontSize: "17px",
-                    margin: "0 0 8px",
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    margin: "0 0 4px",
                   }}
                 >
                   {project.title}
@@ -187,11 +188,14 @@ function PdfPortfolio({ portfolio, exportRef }) {
         <div style={{ marginTop: "28px" }}>
           <h3
             style={{
-              borderBottom: "1px solid #dddddd",
-              color: "#111111",
-              fontSize: "20px",
-              margin: "0 0 12px",
-              paddingBottom: "8px",
+              borderBottom: "1px solid #e5e7eb",
+              color: "#111827",
+              fontSize: "15px",
+              fontWeight: 700,
+              letterSpacing: "0.4px",
+              margin: "0 0 10px",
+              paddingBottom: "6px",
+              textTransform: "uppercase",
             }}
           >
             Contacts
