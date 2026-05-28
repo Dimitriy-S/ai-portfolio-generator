@@ -1,12 +1,51 @@
-AI Portfolio Generator
+# AI Portfolio Generator
 
-React + FastAPI проект для генерации портфолио с AI агентом.
+AI Portfolio Generator is an AI-powered web application for generating a professional portfolio with OpenAI.
 
-Структура:
-- `frontend` - React, Vite, Tailwind CSS, Supabase Auth
-- `backend` - FastAPI API для генерации портфолио через OpenAI
+The user enters short information about themselves, their experience, skills, projects, and contacts. The system sends this prompt to the backend, generates a structured portfolio, allows the user to save it, publish it as a public page, and export it as a PDF.
 
-Запуск frontend:
+## Features
+
+- AI portfolio generation
+- Authorization and registration
+- Portfolio saving
+- Public portfolio pages
+- PDF export
+- Responsive design
+
+## Technologies
+
+### Frontend
+
+- React
+- Vite
+- Tailwind CSS
+- Supabase Auth
+
+### Backend
+
+- FastAPI
+- OpenAI API
+
+### Database
+
+- Supabase PostgreSQL
+
+### Deploy
+
+- Vercel
+- Render
+
+## Project Structure
+
+```text
+frontend/
+backend/
+```
+
+## Local Setup
+
+### Frontend
 
 ```bash
 cd frontend
@@ -14,21 +53,45 @@ npm install
 npm run dev
 ```
 
-Запуск backend:
+### Backend
 
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env
 uvicorn main:app --reload
 ```
 
-В `backend/.env` нужно добавить реальный OpenAI API key:
+## Environment Variables
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+OPENAI_API_KEY=
 ```
 
-Supabase publishable key находится во frontend-коде и используется только для клиентской авторизации.
+## Screenshots
+
+### Authentication
+
+Placeholder for authentication screen.
+
+### AI Portfolio Generator
+
+Placeholder for portfolio generator screen.
+
+### Public Portfolio Page
+
+Placeholder for public portfolio page.
+
+### PDF Export
+
+Placeholder for exported PDF preview.
+
+## Future Improvements
+
+- Add more portfolio templates
+- Add portfolio editing after generation
+- Add multilingual portfolio generation
+- Add analytics for public portfolio views
+- Add custom themes for public pages
+- Add server-side validation for generated portfolio data
