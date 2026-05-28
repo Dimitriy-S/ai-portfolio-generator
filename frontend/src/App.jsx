@@ -386,6 +386,9 @@ function App() {
 
   const isDark = theme === "dark";
   const t = translations[language] || translations.uk;
+  const tRef = useRef(t);
+  const authUserIdRef = useRef(null);
+  const loadedPortfoliosUserIdRef = useRef(null);
 
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
@@ -401,7 +404,22 @@ function App() {
     document.documentElement.lang = language;
   }, [language]);
 
-  const loadSavedPortfolios = useCallback(async (userId) => {
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+
+  const loadSavedPortfolios = useCallback(async (userId, options = {}) => {
+    if (!userId) {
+      return;
+    }
+
+    const force = options.force === true;
+
+    if (!force && loadedPortfoliosUserIdRef.current === userId) {
+      return;
+    }
+
+    loadedPortfoliosUserIdRef.current = userId;
     setListLoading(true);
 
     try {
@@ -418,11 +436,14 @@ function App() {
       setSavedPortfolios(data || []);
     } catch (error) {
       console.error(error);
-      alert(t.loadError);
+      if (loadedPortfoliosUserIdRef.current === userId) {
+        loadedPortfoliosUserIdRef.current = null;
+      }
+      alert(tRef.current.loadError);
     } finally {
       setListLoading(false);
     }
-  }, [t.loadError]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -435,11 +456,14 @@ function App() {
       }
 
       if (isMounted) {
+        const userId = data.session?.user?.id ?? null;
+
+        authUserIdRef.current = userId;
         setSession(data.session);
         setAuthLoading(false);
 
-        if (data.session?.user?.id) {
-          await loadSavedPortfolios(data.session.user.id);
+        if (userId) {
+          await loadSavedPortfolios(userId);
         }
       }
     };
@@ -449,18 +473,27 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (!isMounted) {
+        return;
+      }
+
+      const nextUserId = currentSession?.user?.id ?? null;
+      const previousUserId = authUserIdRef.current;
+
+      authUserIdRef.current = nextUserId;
       setSession(currentSession);
       setAuthLoading(false);
 
-      if (!currentSession) {
+      if (!nextUserId) {
+        loadedPortfoliosUserIdRef.current = null;
         setPortfolio(null);
         setSavedPortfolios([]);
         setSelectedPortfolioId(null);
         return;
       }
 
-      if (currentSession.user?.id) {
-        loadSavedPortfolios(currentSession.user.id);
+      if (nextUserId !== previousUserId) {
+        loadSavedPortfolios(nextUserId);
       }
     });
 
@@ -827,7 +860,9 @@ function App() {
                 <h2 className="text-2xl font-semibold">{t.myPortfolios}</h2>
                 <button
                   type="button"
-                  onClick={() => loadSavedPortfolios(session.user.id)}
+                  onClick={() =>
+                    loadSavedPortfolios(session.user.id, { force: true })
+                  }
                   disabled={listLoading}
                   className={cn(
                     "rounded-xl border px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed",
