@@ -14,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   const loadSavedPortfolios = useCallback(async (userId) => {
     setListLoading(true);
@@ -118,7 +119,7 @@ function App() {
       const title =
         portfolio.name?.trim() ||
         portfolio.profession?.trim() ||
-        "Untitled portfolio";
+        "Untitled Portfolio";
 
       const { data, error } = await supabase
         .from("portfolios")
@@ -154,6 +155,8 @@ function App() {
       return;
     }
 
+    setDeleteLoadingId(portfolioId);
+
     try {
       const { error } = await supabase
         .from("portfolios")
@@ -176,6 +179,8 @@ function App() {
     } catch (error) {
       console.error(error);
       alert("Не удалось удалить портфолио.");
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -290,9 +295,12 @@ function App() {
                       <button
                         type="button"
                         onClick={() => deletePortfolio(savedPortfolio.id)}
-                        className="mt-3 rounded-lg border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10"
+                        disabled={deleteLoadingId === savedPortfolio.id}
+                        className="mt-3 rounded-lg border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:border-neutral-700 disabled:text-neutral-500"
                       >
-                        Delete
+                        {deleteLoadingId === savedPortfolio.id
+                          ? "Deleting..."
+                          : "Delete"}
                       </button>
                     </div>
                   ))}
