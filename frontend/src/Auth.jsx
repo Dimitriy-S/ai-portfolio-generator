@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { languageOptions } from "./i18n";
 import { supabase } from "./lib/supabase";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
@@ -9,7 +10,13 @@ const validatePassword = (password) => ({
   hasDigit: /\d/.test(password),
 });
 
-function Auth({ theme = "dark", onToggleTheme }) {
+function Auth({
+  theme = "dark",
+  language = "uk",
+  onLanguageChange,
+  onToggleTheme,
+  t,
+}) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +46,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
 
     if (!isLogin && !isPasswordValid) {
       setError(
-        "Пароль должен содержать 10–50 символов, минимум 1 заглавную букву и минимум 1 цифру."
+        t.passwordInvalid
       );
       return;
     }
@@ -62,11 +69,11 @@ function Auth({ theme = "dark", onToggleTheme }) {
 
       if (!isLogin) {
         setMessage(
-          "Регистрация успешна. Если включено подтверждение email, проверьте почту."
+          t.registrationSuccess
         );
       }
     } catch (authError) {
-      setError(authError.message || "Не удалось выполнить действие.");
+      setError(authError.message || t.authActionError);
     } finally {
       setLoading(false);
     }
@@ -97,7 +104,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
           <section className="flex flex-col justify-center">
             <div className="mb-5 flex items-center gap-3">
               <p className="rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20">
-                AI Portfolio Generator
+                {t.authBadge}
               </p>
               {onToggleTheme && (
                 <button
@@ -110,17 +117,34 @@ function Auth({ theme = "dark", onToggleTheme }) {
                       : "border-gray-200 bg-white text-indigo-700 shadow-sm hover:border-indigo-300"
                   )}
                 >
-                  {isDark ? "Light" : "Dark"}
+                  {isDark ? t.themeLight : t.themeDark}
                 </button>
+              )}
+              {onLanguageChange && (
+                <select
+                  value={language}
+                  onChange={(event) => onLanguageChange(event.target.value)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm font-semibold outline-none transition hover:-translate-y-0.5",
+                    isDark
+                      ? "border-neutral-700 bg-neutral-900 text-cyan-100 hover:border-cyan-400"
+                      : "border-gray-200 bg-white text-indigo-700 shadow-sm hover:border-indigo-300"
+                  )}
+                >
+                  {languageOptions.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
 
             <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-              Создавайте портфолио с AI после безопасного входа
+              {t.authTitle}
             </h1>
             <p className={cn("mt-6 max-w-2xl text-lg leading-8", mutedTextClass)}>
-              Пользователь вводит только главную информацию о себе, а AI агент
-              формирует био, навыки, проекты, контакты и готовый предпросмотр.
+              {t.authSubtitle}
             </p>
           </section>
 
@@ -148,7 +172,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                       : "text-slate-500 hover:text-slate-950"
                 )}
               >
-                Login
+                {t.login}
               </button>
               <button
                 type="button"
@@ -162,15 +186,15 @@ function Auth({ theme = "dark", onToggleTheme }) {
                       : "text-slate-500 hover:text-slate-950"
                 )}
               >
-                Register
+                {t.register}
               </button>
             </div>
 
             <h2 className="text-2xl font-bold">
-              {isLogin ? "Вход в аккаунт" : "Регистрация"}
+              {isLogin ? t.accountLogin : t.register}
             </h2>
             <p className={cn("mt-2 text-sm", isDark ? "text-neutral-400" : "text-slate-500")}>
-              Сессия сохраняется автоматически через Supabase Auth.
+              {t.sessionSaved}
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -181,7 +205,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                     isDark ? "text-neutral-300" : "text-slate-700"
                   )}
                 >
-                  Email
+                  {t.email}
                 </span>
                 <input
                   type="email"
@@ -203,7 +227,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                     isDark ? "text-neutral-300" : "text-slate-700"
                   )}
                 >
-                  Password
+                  {t.password}
                 </span>
                 <input
                   type="password"
@@ -219,7 +243,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                       : inputClass
                   )}
                   placeholder={
-                    isLogin ? "Введите пароль" : "Минимум 10 символов"
+                    isLogin ? t.passwordLoginPlaceholder : t.passwordRegisterPlaceholder
                   }
                 />
               </label>
@@ -234,7 +258,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                   )}
                 >
                   <p className={cn("font-medium", isDark ? "text-neutral-200" : "text-slate-800")}>
-                    Пароль должен содержать:
+                    {t.passwordRulesTitle}
                   </p>
                   <ul className="mt-2 space-y-1">
                     <li
@@ -246,7 +270,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                             : "text-slate-500"
                       }
                     >
-                      10–50 символов
+                      {t.passwordRuleLength}
                     </li>
                     <li
                       className={
@@ -257,7 +281,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                             : "text-slate-500"
                       }
                     >
-                      минимум 1 заглавную букву
+                      {t.passwordRuleUppercase}
                     </li>
                     <li
                       className={
@@ -268,7 +292,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                             : "text-slate-500"
                       }
                     >
-                      минимум 1 цифру
+                      {t.passwordRuleDigit}
                     </li>
                   </ul>
                 </div>
@@ -291,7 +315,7 @@ function Auth({ theme = "dark", onToggleTheme }) {
                 disabled={isSubmitDisabled}
                 className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 hover:shadow-indigo-500/30 disabled:translate-y-0 disabled:cursor-not-allowed disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-400"
               >
-                {loading ? "Подождите..." : isLogin ? "Login" : "Create account"}
+                {loading ? t.waiting : isLogin ? t.login : t.createAccount}
               </button>
             </form>
           </section>

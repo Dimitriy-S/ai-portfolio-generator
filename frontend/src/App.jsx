@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import Auth from "./Auth";
+import { languageOptions, translations } from "./i18n";
 import { supabase } from "./lib/supabase";
 
 const API_URL = "https://ai-portfolio-backend-gz83.onrender.com";
@@ -22,16 +23,25 @@ const getInitialTheme = () => {
   return window.localStorage.getItem("theme") === "light" ? "light" : "dark";
 };
 
-const getPortfolioTitle = (portfolio) =>
+const getInitialLanguage = () => {
+  if (typeof window === "undefined") {
+    return "uk";
+  }
+
+  const savedLanguage = window.localStorage.getItem("language");
+  return translations[savedLanguage] ? savedLanguage : "uk";
+};
+
+const getPortfolioTitle = (portfolio, t) =>
   portfolio?.name?.trim() ||
   portfolio?.profession?.trim() ||
-  "Untitled Portfolio";
+  t.untitledPortfolio;
 
-const downloadPdf = async (pdfRef) => {
+const downloadPdf = async (pdfRef, t) => {
   const element = pdfRef.current;
 
   if (!element) {
-    alert("PDF блок не найден");
+    alert(t.pdfBlockMissing);
     return;
   }
 
@@ -46,7 +56,7 @@ const downloadPdf = async (pdfRef) => {
   await html2pdf().set(options).from(element).save();
 };
 
-function PdfPortfolio({ portfolio, exportRef }) {
+function PdfPortfolio({ portfolio, exportRef, t }) {
   return (
     <div
       style={{
@@ -84,7 +94,7 @@ function PdfPortfolio({ portfolio, exportRef }) {
               margin: "0",
             }}
           >
-            {portfolio.name || "Untitled Portfolio"}
+            {portfolio.name || t.appTitle}
           </h1>
           <h2
             style={{
@@ -103,9 +113,9 @@ function PdfPortfolio({ portfolio, exportRef }) {
               margin: "12px 0 0",
             }}
           >
-            Email: {portfolio.contacts?.email || "Not specified"} - GitHub:{" "}
-            {portfolio.contacts?.github || "Not specified"} - Phone:{" "}
-            {portfolio.contacts?.phone || "Not specified"}
+            {t.email}: {portfolio.contacts?.email || t.notSpecified} -{" "}
+            {t.github}: {portfolio.contacts?.github || t.notSpecified} -{" "}
+            {t.phone}: {portfolio.contacts?.phone || t.notSpecified}
           </p>
         </div>
 
@@ -122,7 +132,7 @@ function PdfPortfolio({ portfolio, exportRef }) {
               textTransform: "uppercase",
             }}
           >
-            About
+            {t.about}
           </h3>
           <p style={{ color: "#333333", margin: 0 }}>{portfolio.bio}</p>
         </div>
@@ -140,7 +150,7 @@ function PdfPortfolio({ portfolio, exportRef }) {
               textTransform: "uppercase",
             }}
           >
-            Skills
+            {t.skills}
           </h3>
           <p style={{ color: "#333333", margin: 0 }}>
             {portfolio.skills?.join(", ")}
@@ -160,7 +170,7 @@ function PdfPortfolio({ portfolio, exportRef }) {
               textTransform: "uppercase",
             }}
           >
-            Projects
+            {t.projects}
           </h3>
           <div>
             {portfolio.projects?.map((project, index) => (
@@ -196,17 +206,17 @@ function PdfPortfolio({ portfolio, exportRef }) {
               textTransform: "uppercase",
             }}
           >
-            Contacts
+            {t.contacts}
           </h3>
           <div style={{ color: "#333333" }}>
             <p style={{ margin: "0 0 4px" }}>
-              Email: {portfolio.contacts?.email || "Not specified"}
+              {t.email}: {portfolio.contacts?.email || t.notSpecified}
             </p>
             <p style={{ margin: "0 0 4px" }}>
-              GitHub: {portfolio.contacts?.github || "Not specified"}
+              {t.github}: {portfolio.contacts?.github || t.notSpecified}
             </p>
             <p style={{ margin: 0 }}>
-              Phone: {portfolio.contacts?.phone || "Not specified"}
+              {t.phone}: {portfolio.contacts?.phone || t.notSpecified}
             </p>
           </div>
         </div>
@@ -225,6 +235,7 @@ function PortfolioView({
   pdfLoading,
   onDownloadPdf,
   theme,
+  t,
 }) {
   const isDark = theme === "dark";
 
@@ -262,7 +273,7 @@ function PortfolioView({
                 : "border-gray-200 bg-white text-slate-700 shadow-sm hover:border-indigo-300 hover:text-indigo-700 disabled:text-gray-400"
             )}
           >
-            {pdfLoading ? "Preparing PDF..." : "Download PDF"}
+            {pdfLoading ? t.preparingPdf : t.downloadPdf}
           </button>
 
           {showSaveButton && (
@@ -273,7 +284,7 @@ function PortfolioView({
                 disabled={improveLoading}
                 className="rounded-2xl bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-5 py-3 font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:-translate-y-0.5 hover:shadow-fuchsia-500/30 disabled:translate-y-0 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-400"
               >
-                {improveLoading ? "Improving..." : "Improve Portfolio"}
+                {improveLoading ? t.improving : t.improvePortfolio}
               </button>
 
               <button
@@ -282,7 +293,7 @@ function PortfolioView({
                 disabled={saveLoading}
                 className="rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:shadow-cyan-500/30 disabled:translate-y-0 disabled:bg-neutral-700 disabled:from-neutral-700 disabled:to-neutral-700"
               >
-                {saveLoading ? "Saving..." : "Save Portfolio"}
+                {saveLoading ? t.saving : t.savePortfolio}
               </button>
             </>
           )}
@@ -298,7 +309,7 @@ function PortfolioView({
         {portfolio.bio}
       </p>
 
-      <h3 className="mb-4 mt-8 text-2xl font-bold">Skills</h3>
+      <h3 className="mb-4 mt-8 text-2xl font-bold">{t.skills}</h3>
       <div className="flex flex-wrap gap-2">
         {portfolio.skills?.map((skill, index) => (
           <span
@@ -315,7 +326,7 @@ function PortfolioView({
         ))}
       </div>
 
-      <h3 className="mb-4 mt-8 text-2xl font-bold">Projects</h3>
+      <h3 className="mb-4 mt-8 text-2xl font-bold">{t.projects}</h3>
       <div className="space-y-4">
         {portfolio.projects?.map((project, index) => (
           <div
@@ -340,16 +351,16 @@ function PortfolioView({
         ))}
       </div>
 
-      <h3 className="mb-4 mt-8 text-2xl font-bold">Contacts</h3>
+      <h3 className="mb-4 mt-8 text-2xl font-bold">{t.contacts}</h3>
       <div
         className={cn(
           "space-y-1",
           isDark ? "text-neutral-300" : "text-slate-600"
         )}
       >
-        <p>Email: {portfolio.contacts?.email || "Не указан"}</p>
-        <p>GitHub: {portfolio.contacts?.github || "Не указан"}</p>
-        <p>Phone: {portfolio.contacts?.phone || "Не указан"}</p>
+        <p>{t.email}: {portfolio.contacts?.email || t.notSpecified}</p>
+        <p>{t.github}: {portfolio.contacts?.github || t.notSpecified}</p>
+        <p>{t.phone}: {portfolio.contacts?.phone || t.notSpecified}</p>
       </div>
     </div>
   );
@@ -358,6 +369,7 @@ function PortfolioView({
 function App() {
   const previewPdfRef = useRef(null);
   const [theme, setTheme] = useState(getInitialTheme);
+  const [language, setLanguage] = useState(getInitialLanguage);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
@@ -373,6 +385,7 @@ function App() {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const isDark = theme === "dark";
+  const t = translations[language] || translations.uk;
 
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
@@ -382,6 +395,11 @@ function App() {
     window.localStorage.setItem("theme", theme);
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    window.localStorage.setItem("language", language);
+    document.documentElement.lang = language;
+  }, [language]);
 
   const loadSavedPortfolios = useCallback(async (userId) => {
     setListLoading(true);
@@ -400,11 +418,11 @@ function App() {
       setSavedPortfolios(data || []);
     } catch (error) {
       console.error(error);
-      alert("Не удалось загрузить сохранённые портфолио.");
+      alert(t.loadError);
     } finally {
       setListLoading(false);
     }
-  }, []);
+  }, [t.loadError]);
 
   useEffect(() => {
     let isMounted = true;
@@ -459,7 +477,9 @@ function App() {
       const response = await fetch(
         `${API_URL}/generate?prompt=${encodeURIComponent(
           prompt
-        )}&style=${encodeURIComponent(selectedStyle)}`
+        )}&style=${encodeURIComponent(selectedStyle)}&language=${encodeURIComponent(
+          language
+        )}`
       );
 
       if (!response.ok) {
@@ -471,7 +491,7 @@ function App() {
       setSelectedPortfolioId(null);
     } catch (error) {
       console.error(error);
-      alert("Ошибка генерации. Проверь backend.");
+      alert(t.generateError);
     } finally {
       setLoading(false);
     }
@@ -493,6 +513,7 @@ function App() {
         body: JSON.stringify({
           portfolio,
           style: selectedStyle,
+          language,
         }),
       });
 
@@ -514,7 +535,7 @@ function App() {
       setSelectedPortfolioId(null);
     } catch (error) {
       console.error(error);
-      alert("Не удалось улучшить портфолио.");
+      alert(t.improveError);
     } finally {
       setImproveLoading(false);
     }
@@ -528,7 +549,7 @@ function App() {
     setSaveLoading(true);
 
     try {
-      const title = getPortfolioTitle(portfolio);
+      const title = getPortfolioTitle(portfolio, t);
 
       const { data, error } = await supabase
         .from("portfolios")
@@ -548,7 +569,7 @@ function App() {
       setSelectedPortfolioId(data.id);
     } catch (error) {
       console.error(error);
-      alert("Не удалось сохранить портфолио.");
+      alert(t.saveError);
     } finally {
       setSaveLoading(false);
     }
@@ -567,10 +588,10 @@ function App() {
     setPdfLoading(true);
 
     try {
-      await downloadPdf(previewPdfRef);
+      await downloadPdf(previewPdfRef, t);
     } catch (error) {
       console.error("PDF export error:", error);
-      alert("Не удалось создать PDF");
+      alert(t.pdfCreateError);
     } finally {
       setPdfLoading(false);
     }
@@ -604,7 +625,7 @@ function App() {
       }
     } catch (error) {
       console.error(error);
-      alert("Не удалось удалить портфолио.");
+      alert(t.deleteError);
     } finally {
       setDeleteLoadingId(null);
     }
@@ -615,7 +636,7 @@ function App() {
 
     if (error) {
       console.error(error);
-      alert("Не удалось выйти из аккаунта.");
+      alert(t.logoutError);
     }
   };
 
@@ -639,14 +660,22 @@ function App() {
         )}
       >
         <div className={cn("rounded-2xl border px-6 py-4", cardClass)}>
-          Проверка сессии...
+          {t.checkingSession}
         </div>
       </div>
     );
   }
 
   if (!session) {
-    return <Auth theme={theme} onToggleTheme={toggleTheme} />;
+    return (
+      <Auth
+        theme={theme}
+        language={language}
+        onLanguageChange={setLanguage}
+        onToggleTheme={toggleTheme}
+        t={t}
+      />
+    );
   }
 
   return (
@@ -659,7 +688,7 @@ function App() {
       <div className="pointer-events-none fixed left-0 right-0 top-0 z-50 h-1 w-screen bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
 
       {portfolio && (
-        <PdfPortfolio portfolio={portfolio} exportRef={previewPdfRef} />
+        <PdfPortfolio portfolio={portfolio} exportRef={previewPdfRef} t={t} />
       )}
 
       <div className="relative mx-auto max-w-7xl px-6 pb-6 pt-8">
@@ -668,9 +697,7 @@ function App() {
             <p className={cn("text-sm", mutedTextClass)}>
               {session.user.email}
             </p>
-            <h1 className="text-4xl font-bold tracking-tight">
-              AI Portfolio Generator
-            </h1>
+            <h1 className="text-4xl font-bold tracking-tight">{t.appTitle}</h1>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -684,8 +711,25 @@ function App() {
                   : "border-gray-200 bg-white text-indigo-700 shadow-sm hover:border-indigo-300"
               )}
             >
-              {isDark ? "Light" : "Dark"}
+              {isDark ? t.themeLight : t.themeDark}
             </button>
+
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              className={cn(
+                "rounded-2xl border px-4 py-3 font-semibold outline-none transition",
+                isDark
+                  ? "border-neutral-700 bg-neutral-900 text-cyan-100 hover:border-cyan-400"
+                  : "border-gray-200 bg-white text-indigo-700 shadow-sm hover:border-indigo-300"
+              )}
+            >
+              {languageOptions.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
 
             <button
               type="button"
@@ -697,7 +741,7 @@ function App() {
                   : "border-gray-200 bg-white text-slate-700 shadow-sm hover:border-red-300 hover:text-red-600"
               )}
             >
-              Logout
+              {t.logout}
             </button>
           </div>
         </header>
@@ -711,7 +755,7 @@ function App() {
               )}
             >
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">AI Assistant</h2>
+                <h2 className="text-2xl font-semibold">{t.aiAssistant}</h2>
                 <span className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-3 py-1 text-xs font-bold text-white">
                   AI
                 </span>
@@ -724,7 +768,7 @@ function App() {
                     isDark ? "text-neutral-300" : "text-slate-700"
                   )}
                 >
-                  Portfolio style
+                  {t.portfolioStyle}
                 </span>
                 <select
                   value={selectedStyle}
@@ -736,7 +780,7 @@ function App() {
                 >
                   {PORTFOLIO_STYLES.map((style) => (
                     <option key={style} value={style}>
-                      {style}
+                      {t.styles?.[style] || style}
                     </option>
                   ))}
                 </select>
@@ -757,7 +801,7 @@ function App() {
                       ? "text-white placeholder:text-neutral-500"
                       : "text-slate-950 placeholder:text-slate-400"
                   )}
-                  placeholder="Расскажите о себе, опыте, навыках, проектах..."
+                  placeholder={t.promptPlaceholder}
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}
                 />
@@ -769,7 +813,7 @@ function App() {
                 disabled={loading || !prompt.trim()}
                 className="mt-4 w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 hover:shadow-indigo-500/30 disabled:translate-y-0 disabled:cursor-not-allowed disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-400"
               >
-                {loading ? "Генерация..." : "Generate Portfolio"}
+                {loading ? t.generating : t.generatePortfolio}
               </button>
             </section>
 
@@ -780,7 +824,7 @@ function App() {
               )}
             >
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-2xl font-semibold">My Portfolios</h2>
+                <h2 className="text-2xl font-semibold">{t.myPortfolios}</h2>
                 <button
                   type="button"
                   onClick={() => loadSavedPortfolios(session.user.id)}
@@ -792,7 +836,7 @@ function App() {
                       : "border-gray-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-700 disabled:text-gray-400"
                   )}
                 >
-                  {listLoading ? "Loading..." : "Refresh"}
+                  {listLoading ? t.loading : t.refresh}
                 </button>
               </div>
 
@@ -805,7 +849,7 @@ function App() {
                       : "border-gray-300 text-slate-500"
                   )}
                 >
-                  Сохранённые портфолио появятся здесь.
+                  {t.noSavedPortfolios}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -835,8 +879,10 @@ function App() {
                           {savedPortfolio.created_at
                             ? new Date(
                                 savedPortfolio.created_at
-                              ).toLocaleString()
-                            : "Без даты"}
+                              ).toLocaleString(
+                                language === "uk" ? "uk-UA" : "en-US"
+                              )
+                            : t.noDate}
                         </span>
                       </button>
 
@@ -852,8 +898,8 @@ function App() {
                         )}
                       >
                         {deleteLoadingId === savedPortfolio.id
-                          ? "Deleting..."
-                          : "Delete"}
+                          ? t.deleting
+                          : t.delete}
                       </button>
                     </div>
                   ))}
@@ -877,7 +923,7 @@ function App() {
                     : "border-gray-300 text-slate-500"
                 )}
               >
-                Здесь появится предпросмотр портфолио
+                {t.previewEmpty}
               </div>
             ) : (
               <PortfolioView
@@ -890,6 +936,7 @@ function App() {
                 pdfLoading={pdfLoading}
                 onDownloadPdf={handleDownloadPdf}
                 theme={theme}
+                t={t}
               />
             )}
           </section>

@@ -28,6 +28,13 @@ client = OpenAI(
 class ImproveRequest(BaseModel):
     portfolio: dict[str, Any]
     style: str = "Minimal"
+    language: str = "uk"
+
+
+LANGUAGE_NAMES = {
+    "uk": "Ukrainian",
+    "en": "English",
+}
 
 
 PORTFOLIO_JSON_STRUCTURE = """
@@ -72,7 +79,9 @@ def home():
 
 
 @app.get("/generate")
-def generate_portfolio(prompt: str, style: str = "Minimal"):
+def generate_portfolio(prompt: str, style: str = "Minimal", language: str = "uk"):
+    output_language = LANGUAGE_NAMES.get(language, "Ukrainian")
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -84,7 +93,10 @@ def generate_portfolio(prompt: str, style: str = "Minimal"):
 Всегда возвращай ТОЛЬКО валидный JSON.
 
 Выбранный стиль портфолио: {style}.
+Язык портфолио: {output_language}.
 Учитывай этот стиль при генерации bio, skills, projects и theme.
+Пиши name, profession, bio, skills, project titles, project descriptions и theme на языке: {output_language}.
+Не смешивай языки.
 
 Обязательно:
 - заполняй ВСЕ поля,
@@ -112,6 +124,8 @@ def generate_portfolio(prompt: str, style: str = "Minimal"):
 
 @app.post("/improve")
 def improve_portfolio(request: ImproveRequest):
+    output_language = LANGUAGE_NAMES.get(request.language, "Ukrainian")
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -123,6 +137,7 @@ def improve_portfolio(request: ImproveRequest):
 Всегда возвращай ТОЛЬКО валидный JSON.
 
 Выбранный стиль портфолио: {request.style}.
+Язык портфолио: {output_language}.
 
 Улучши существующее портфолио:
 - сделай bio более профессиональным и убедительным,
@@ -133,6 +148,8 @@ def improve_portfolio(request: ImproveRequest):
 - НЕ удаляй contacts.phone,
 - НЕ теряй skills,
 - НЕ меняй структуру JSON.
+- Пиши улучшенный profession, bio, skills, projects и theme на языке: {output_language}.
+- Не смешивай языки.
 
 Структура должна остаться:
 
