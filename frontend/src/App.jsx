@@ -33,7 +33,7 @@ function PdfPortfolio({ portfolio, exportRef }) {
   return (
     <div
       style={{
-        height: 1,
+        height: 0,
         overflow: "hidden",
         pointerEvents: "none",
       }}
@@ -210,7 +210,6 @@ function PortfolioView({
     <div>
       <div className="mb-6 flex flex-col gap-4 border-b border-neutral-800 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="mb-2 text-indigo-400">{portfolio.theme}</p>
           <h2 className="text-4xl font-bold">{portfolio.name}</h2>
           <h3 className="mt-2 text-xl text-neutral-300">
             {portfolio.profession}
