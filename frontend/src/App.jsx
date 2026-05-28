@@ -656,13 +656,13 @@ function App() {
         pageClass
       )}
     >
-      <div className="pointer-events-none sticky top-0 z-50 h-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
+      <div className="pointer-events-none fixed left-0 right-0 top-0 z-50 h-1 w-screen bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
 
       {portfolio && (
         <PdfPortfolio portfolio={portfolio} exportRef={previewPdfRef} />
       )}
 
-      <div className="relative mx-auto max-w-7xl px-6 pb-6 pt-7">
+      <div className="relative mx-auto max-w-7xl px-6 pb-6 pt-8">
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className={cn("text-sm", mutedTextClass)}>
@@ -742,15 +742,26 @@ function App() {
                 </select>
               </label>
 
-              <textarea
+              <div
                 className={cn(
-                  "app-scrollbar h-64 w-full resize-none rounded-2xl border p-4 outline-none transition",
-                  inputClass
+                  "overflow-hidden rounded-2xl border transition",
+                  isDark
+                    ? "border-neutral-700 bg-neutral-800 focus-within:border-cyan-400"
+                    : "border-gray-200 bg-white focus-within:border-indigo-400"
                 )}
-                placeholder="Расскажите о себе, опыте, навыках, проектах..."
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-              />
+              >
+                <textarea
+                  className={cn(
+                    "app-scrollbar h-64 w-full resize-none border-0 bg-transparent p-4 outline-none",
+                    isDark
+                      ? "text-white placeholder:text-neutral-500"
+                      : "text-slate-950 placeholder:text-slate-400"
+                  )}
+                  placeholder="Расскажите о себе, опыте, навыках, проектах..."
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                />
+              </div>
 
               <button
                 type="button"

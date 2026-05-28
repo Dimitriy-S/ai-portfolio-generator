@@ -63,13 +63,15 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 }
 
 .app-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
 }
 
 .app-scrollbar::-webkit-scrollbar-track {
   border-radius: 999px;
+  margin-block: 10px;
 }
 
 .app-scrollbar::-webkit-scrollbar-thumb {
   border-radius: 999px;
+  border-width: 1px;
 }

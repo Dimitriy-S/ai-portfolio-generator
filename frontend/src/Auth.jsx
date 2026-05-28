@@ -90,9 +90,9 @@ function Auth({ theme = "dark", onToggleTheme }) {
         pageClass
       )}
     >
-      <div className="pointer-events-none sticky top-0 z-50 h-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
+      <div className="pointer-events-none fixed left-0 right-0 top-0 z-50 h-1 w-screen bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
 
-      <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center px-6 py-10">
+      <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center px-6 pb-10 pt-11">
         <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-[1fr_440px]">
           <section className="flex flex-col justify-center">
             <div className="mb-5 flex items-center gap-3">
