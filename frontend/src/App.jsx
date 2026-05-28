@@ -25,92 +25,186 @@ const getPortfolioTitle = (portfolio) =>
 const getPublicUrl = (slug) =>
   `${window.location.origin}${PUBLIC_PORTFOLIO_PREFIX}${slug}`;
 
-const downloadPdf = async (element) => {
+const downloadPdf = async (pdfRef) => {
+  const element = pdfRef.current;
+
   if (!element) {
+    alert("PDF блок не найден");
     return;
   }
 
-  await html2pdf()
-    .set({
-      margin: 0,
-      filename: "portfolio.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    })
-    .from(element)
-    .save();
+  const options = {
+    margin: 10,
+    filename: "portfolio.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+  };
+
+  await html2pdf().set(options).from(element).save();
 };
 
 function PdfPortfolio({ portfolio, exportRef }) {
   return (
-    <div className="fixed -left-[9999px] top-0">
+    <div
+      style={{
+        height: 1,
+        overflow: "hidden",
+        pointerEvents: "none",
+      }}
+      aria-hidden="true"
+    >
       <div
         ref={exportRef}
-        className="w-[794px] bg-white px-14 py-12 font-sans text-neutral-950"
+        style={{
+          background: "#ffffff",
+          color: "#111111",
+          width: "760px",
+          padding: "40px",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        }}
       >
-        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-indigo-700">
+        <p
+          style={{
+            color: "#4338ca",
+            fontSize: "12px",
+            fontWeight: 700,
+            letterSpacing: "2px",
+            margin: "0 0 12px",
+            textTransform: "uppercase",
+          }}
+        >
           {portfolio.theme || "Portfolio"}
         </p>
-        <h1 className="text-4xl font-bold leading-tight">
+        <h1
+          style={{
+            color: "#111111",
+            fontSize: "34px",
+            lineHeight: "1.15",
+            margin: "0",
+          }}
+        >
           {portfolio.name || "Untitled Portfolio"}
         </h1>
-        <h2 className="mt-2 text-xl font-semibold text-neutral-600">
+        <h2
+          style={{
+            color: "#444444",
+            fontSize: "20px",
+            margin: "8px 0 0",
+          }}
+        >
           {portfolio.profession}
         </h2>
 
-        <section className="mt-8">
-          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+        <div style={{ marginTop: "28px" }}>
+          <h3
+            style={{
+              borderBottom: "1px solid #dddddd",
+              color: "#111111",
+              fontSize: "20px",
+              margin: "0 0 12px",
+              paddingBottom: "8px",
+            }}
+          >
             About
           </h3>
-          <p className="text-base leading-7 text-neutral-700">{portfolio.bio}</p>
-        </section>
+          <p style={{ color: "#333333", margin: 0 }}>{portfolio.bio}</p>
+        </div>
 
-        <section className="mt-8">
-          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+        <div style={{ marginTop: "28px" }}>
+          <h3
+            style={{
+              borderBottom: "1px solid #dddddd",
+              color: "#111111",
+              fontSize: "20px",
+              margin: "0 0 12px",
+              paddingBottom: "8px",
+            }}
+          >
             Skills
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div>
             {portfolio.skills?.map((skill, index) => (
               <span
                 key={index}
-                className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-800"
+                style={{
+                  border: "1px solid #c7d2fe",
+                  borderRadius: "999px",
+                  color: "#3730a3",
+                  display: "inline-block",
+                  fontWeight: 700,
+                  margin: "0 8px 8px 0",
+                  padding: "4px 10px",
+                }}
               >
                 {skill}
               </span>
             ))}
           </div>
-        </section>
+        </div>
 
-        <section className="mt-8">
-          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+        <div style={{ marginTop: "28px" }}>
+          <h3
+            style={{
+              borderBottom: "1px solid #dddddd",
+              color: "#111111",
+              fontSize: "20px",
+              margin: "0 0 12px",
+              paddingBottom: "8px",
+            }}
+          >
             Projects
           </h3>
-          <div className="space-y-4">
+          <div>
             {portfolio.projects?.map((project, index) => (
               <div
                 key={index}
-                className="rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+                style={{
+                  border: "1px solid #dddddd",
+                  marginBottom: "14px",
+                  padding: "14px",
+                }}
               >
-                <h4 className="text-lg font-bold">{project.title}</h4>
-                <p className="mt-2 text-sm leading-6 text-neutral-700">
+                <h4
+                  style={{
+                    color: "#111111",
+                    fontSize: "17px",
+                    margin: "0 0 8px",
+                  }}
+                >
+                  {project.title}
+                </h4>
+                <p style={{ color: "#333333", margin: 0 }}>
                   {project.description}
                 </p>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
-        <section className="mt-8">
-          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+        <div style={{ marginTop: "28px" }}>
+          <h3
+            style={{
+              borderBottom: "1px solid #dddddd",
+              color: "#111111",
+              fontSize: "20px",
+              margin: "0 0 12px",
+              paddingBottom: "8px",
+            }}
+          >
             Contacts
           </h3>
-          <div className="space-y-1 text-base text-neutral-700">
-            <p>Email: {portfolio.contacts?.email || "Not specified"}</p>
-            <p>GitHub: {portfolio.contacts?.github || "Not specified"}</p>
+          <div style={{ color: "#333333" }}>
+            <p style={{ margin: "0 0 4px" }}>
+              Email: {portfolio.contacts?.email || "Not specified"}
+            </p>
+            <p style={{ margin: 0 }}>
+              GitHub: {portfolio.contacts?.github || "Not specified"}
+            </p>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );
@@ -202,10 +296,9 @@ function PublicPortfolioPage({ portfolio, loading, error, onCopy }) {
     setPdfLoading(true);
 
     try {
-      const element = publicPdfRef.current;
-      await downloadPdf(element);
+      await downloadPdf(publicPdfRef);
     } catch (error) {
-      console.error(error);
+      console.error("PDF export error:", error);
       alert("Не удалось создать PDF");
     } finally {
       setPdfLoading(false);
@@ -540,10 +633,9 @@ function App() {
     setPdfLoading(true);
 
     try {
-      const element = previewPdfRef.current;
-      await downloadPdf(element);
+      await downloadPdf(previewPdfRef);
     } catch (error) {
-      console.error(error);
+      console.error("PDF export error:", error);
       alert("Не удалось создать PDF");
     } finally {
       setPdfLoading(false);
