@@ -160,6 +160,79 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
+const getGithubHref = (value) => {
+  const github = String(value || "").trim();
+
+  if (!github) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(github)) {
+    return github;
+  }
+
+  if (/^github\.com\//i.test(github)) {
+    return `https://${github}`;
+  }
+
+  return `https://github.com/${github.replace(/^@/, "")}`;
+};
+
+const getContactHref = (type, value) => {
+  const contact = String(value || "").trim();
+
+  if (!contact) {
+    return "";
+  }
+
+  if (type === "email") {
+    return `mailto:${contact}`;
+  }
+
+  if (type === "phone") {
+    return `tel:${contact.replace(/[^\d+]/g, "")}`;
+  }
+
+  if (type === "github") {
+    return getGithubHref(contact);
+  }
+
+  return "";
+};
+
+const getContactItems = (portfolio, t) => [
+  {
+    key: "email",
+    label: t.email,
+    value: portfolio.contacts?.email || "",
+    href: getContactHref("email", portfolio.contacts?.email),
+  },
+  {
+    key: "github",
+    label: t.github,
+    value: portfolio.contacts?.github || "",
+    href: getContactHref("github", portfolio.contacts?.github),
+  },
+  {
+    key: "phone",
+    label: t.phone,
+    value: portfolio.contacts?.phone || "",
+    href: getContactHref("phone", portfolio.contacts?.phone),
+  },
+];
+
+const renderHtmlContacts = (portfolio, t) =>
+  getContactItems(portfolio, t)
+    .map((contact) => {
+      const value = contact.value || t.notSpecified;
+      const content = contact.href
+        ? `<a href="${escapeHtml(contact.href)}">${escapeHtml(value)}</a>`
+        : escapeHtml(value);
+
+      return `<p><strong>${escapeHtml(contact.label)}:</strong> ${content}</p>`;
+    })
+    .join("");
+
 const renderHtmlList = (items, t) => {
   const list = toList(items);
 
@@ -225,8 +298,9 @@ const buildPortfolioHtml = (portfolio, t, language) => {
       li p { margin-top: 4px; }
       a { color: #4f46e5; text-decoration: none; overflow-wrap: anywhere; }
       a:hover { text-decoration: underline; }
-      .contacts { display: flex; flex-wrap: wrap; gap: 10px 18px; color: #64748b; margin-top: 16px; }
-      .contacts span { overflow-wrap: anywhere; }
+      .contacts { display: grid; gap: 6px; color: #64748b; margin-top: 16px; }
+      .contacts p { margin: 0; overflow-wrap: anywhere; }
+      .contacts strong { color: #334155; }
       .chips { display: flex; flex-wrap: wrap; gap: 8px 12px; color: #374151; }
       .chips span:not(:last-child)::after { content: ","; }
       .muted { color: #94a3b8; }
@@ -243,9 +317,7 @@ const buildPortfolioHtml = (portfolio, t, language) => {
           <h1>${escapeHtml(portfolio.name || t.appTitle)}</h1>
           <h3>${escapeHtml(portfolio.profession)}</h3>
           <div class="contacts">
-            <span>${escapeHtml(t.email)}: ${escapeHtml(portfolio.contacts?.email || t.notSpecified)}</span>
-            <span>${escapeHtml(t.github)}: ${escapeHtml(portfolio.contacts?.github || t.notSpecified)}</span>
-            <span>${escapeHtml(t.phone)}: ${escapeHtml(portfolio.contacts?.phone || t.notSpecified)}</span>
+            ${renderHtmlContacts(portfolio, t)}
           </div>
         </header>
 
@@ -268,9 +340,9 @@ const buildPortfolioHtml = (portfolio, t, language) => {
 
         <section>
           <h2>${escapeHtml(t.contacts)}</h2>
-          <p>${escapeHtml(t.email)}: ${escapeHtml(portfolio.contacts?.email || t.notSpecified)}</p>
-          <p>${escapeHtml(t.github)}: ${escapeHtml(portfolio.contacts?.github || t.notSpecified)}</p>
-          <p>${escapeHtml(t.phone)}: ${escapeHtml(portfolio.contacts?.phone || t.notSpecified)}</p>
+          <div class="contacts">
+            ${renderHtmlContacts(portfolio, t)}
+          </div>
         </section>
 
         ${sections}
@@ -349,6 +421,36 @@ function PdfExtendedSection({ title, items }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function PdfContactLines({ portfolio, t, compact = false }) {
+  return (
+    <div
+      style={{
+        color: compact ? "#6b7280" : "#333333",
+        fontSize: compact ? "12.5px" : "13.5px",
+        margin: compact ? "12px 0 0" : 0,
+      }}
+    >
+      {getContactItems(portfolio, t).map((contact) => (
+        <p key={contact.key} style={{ margin: "0 0 4px" }}>
+          <strong style={{ color: compact ? "#4b5563" : "#111827" }}>
+            {contact.label}:
+          </strong>{" "}
+          {contact.href ? (
+            <a
+              href={contact.href}
+              style={{ color: "#4f46e5", textDecoration: "none" }}
+            >
+              {contact.value}
+            </a>
+          ) : (
+            t.notSpecified
+          )}
+        </p>
+      ))}
     </div>
   );
 }
@@ -434,6 +536,40 @@ function ExtendedSection({ title, items, theme }) {
   );
 }
 
+function ContactLine({ label, value, href, theme }) {
+  const isDark = theme === "dark";
+
+  return (
+    <p className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
+      <span
+        className={cn(
+          "font-semibold",
+          isDark ? "text-neutral-100" : "text-slate-800"
+        )}
+      >
+        {label}:
+      </span>
+      {href ? (
+        <a
+          href={href}
+          target={href.startsWith("http") ? "_blank" : undefined}
+          rel={href.startsWith("http") ? "noreferrer" : undefined}
+          className={cn(
+            "break-words transition hover:underline",
+            isDark ? "text-cyan-200" : "text-indigo-700"
+          )}
+        >
+          {value}
+        </a>
+      ) : (
+        <span className={isDark ? "text-neutral-400" : "text-slate-500"}>
+          {value}
+        </span>
+      )}
+    </p>
+  );
+}
+
 function PdfPortfolio({ portfolio, exportRef, t }) {
   return (
     <div
@@ -484,17 +620,7 @@ function PdfPortfolio({ portfolio, exportRef, t }) {
           >
             {portfolio.profession}
           </h2>
-          <p
-            style={{
-              color: "#6b7280",
-              fontSize: "12.5px",
-              margin: "12px 0 0",
-            }}
-          >
-            {t.email}: {portfolio.contacts?.email || t.notSpecified} -{" "}
-            {t.github}: {portfolio.contacts?.github || t.notSpecified} -{" "}
-            {t.phone}: {portfolio.contacts?.phone || t.notSpecified}
-          </p>
+          <PdfContactLines portfolio={portfolio} t={t} compact />
         </div>
 
         <div>
@@ -586,17 +712,7 @@ function PdfPortfolio({ portfolio, exportRef, t }) {
           >
             {t.contacts}
           </h3>
-          <div style={{ color: "#333333" }}>
-            <p style={{ margin: "0 0 4px" }}>
-              {t.email}: {portfolio.contacts?.email || t.notSpecified}
-            </p>
-            <p style={{ margin: "0 0 4px" }}>
-              {t.github}: {portfolio.contacts?.github || t.notSpecified}
-            </p>
-            <p style={{ margin: 0 }}>
-              {t.phone}: {portfolio.contacts?.phone || t.notSpecified}
-            </p>
-          </div>
+          <PdfContactLines portfolio={portfolio} t={t} />
         </div>
 
         {extendedSections.map((section) => (
@@ -756,13 +872,19 @@ function PortfolioView({
       <h3 className="mb-4 mt-8 text-2xl font-bold">{t.contacts}</h3>
       <div
         className={cn(
-          "space-y-1",
+          "space-y-2",
           isDark ? "text-neutral-300" : "text-slate-600"
         )}
       >
-        <p>{t.email}: {portfolio.contacts?.email || t.notSpecified}</p>
-        <p>{t.github}: {portfolio.contacts?.github || t.notSpecified}</p>
-        <p>{t.phone}: {portfolio.contacts?.phone || t.notSpecified}</p>
+        {getContactItems(portfolio, t).map((contact) => (
+          <ContactLine
+            key={contact.key}
+            label={contact.label}
+            value={contact.value || t.notSpecified}
+            href={contact.href}
+            theme={theme}
+          />
+        ))}
       </div>
 
       {extendedSections.map((section) => (
