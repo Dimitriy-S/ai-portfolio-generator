@@ -752,7 +752,7 @@ function App() {
               >
                 <textarea
                   className={cn(
-                    "app-scrollbar h-64 w-full resize-none border-0 bg-transparent p-4 outline-none",
+                    "app-scrollbar h-64 w-full resize-none border-0 bg-transparent py-4 pl-4 pr-6 outline-none",
                     isDark
                       ? "text-white placeholder:text-neutral-500"
                       : "text-slate-950 placeholder:text-slate-400"

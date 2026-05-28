@@ -2,15 +2,15 @@
 
 :root {
   scrollbar-width: thin;
-  scrollbar-color: #a5b4fc #f3f4f6;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 html[data-theme="dark"] {
-  scrollbar-color: #52525b #18181b;
+  scrollbar-color: #52525b transparent;
 }
 
 html[data-theme="light"] {
-  scrollbar-color: #a5b4fc #f3f4f6;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 * {
@@ -18,60 +18,98 @@ html[data-theme="light"] {
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #c7d2fe, #93c5fd);
-  border: 2px solid #f3f4f6;
+  background: #cbd5e1;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #a5b4fc, #60a5fa);
+  background: #94a3b8;
+  background-clip: padding-box;
 }
 
 html[data-theme="dark"] ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: transparent;
 }
 
 html[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #6366f1, #a855f7, #06b6d4);
-  border-color: #18181b;
+  background: #52525b;
+  background-clip: padding-box;
+  border-color: transparent;
 }
 
 html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #818cf8, #c084fc, #22d3ee);
+  background: #4f46e5;
+  background-clip: padding-box;
 }
 
 html[data-theme="light"] ::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: transparent;
 }
 
 html[data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #c7d2fe, #93c5fd);
-  border-color: #f3f4f6;
+  background: #cbd5e1;
+  background-clip: padding-box;
+  border-color: transparent;
 }
 
 html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #9ca3af, #818cf8);
+  background: #c7d2fe;
+  background-clip: padding-box;
+}
+
+.app-scrollbar {
+  scrollbar-width: thin;
+}
+
+html[data-theme="dark"] .app-scrollbar {
+  scrollbar-color: #52525b transparent;
+}
+
+html[data-theme="light"] .app-scrollbar {
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .app-scrollbar::-webkit-scrollbar {
-  width: 7px;
+  width: 6px;
 }
 
 .app-scrollbar::-webkit-scrollbar-track {
-  border-radius: 999px;
-  margin-block: 10px;
+  background: transparent;
 }
 
 .app-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 0;
   border-radius: 999px;
-  border-width: 1px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+html[data-theme="dark"] .app-scrollbar::-webkit-scrollbar-thumb {
+  background: #52525b;
+}
+
+html[data-theme="dark"] .app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
+}
+
+html[data-theme="light"] .app-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+html[data-theme="light"] .app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c7d2fe;
 }
