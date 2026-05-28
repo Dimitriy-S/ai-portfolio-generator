@@ -5,6 +5,16 @@ import { supabase } from "./lib/supabase";
 
 const API_URL = "https://ai-portfolio-backend-gz83.onrender.com";
 
+const cn = (...classes) => classes.filter(Boolean).join(" ");
+
+const getInitialTheme = () => {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  return window.localStorage.getItem("theme") === "light" ? "light" : "dark";
+};
+
 const getPortfolioTitle = (portfolio) =>
   portfolio?.name?.trim() ||
   portfolio?.profession?.trim() ||
@@ -205,13 +215,28 @@ function PortfolioView({
   onSave,
   pdfLoading,
   onDownloadPdf,
+  theme,
 }) {
+  const isDark = theme === "dark";
+
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 border-b border-neutral-800 pb-6 sm:flex-row sm:items-start sm:justify-between">
+      <div
+        className={cn(
+          "mb-6 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-start sm:justify-between",
+          isDark ? "border-neutral-800" : "border-gray-200"
+        )}
+      >
         <div>
-          <h2 className="text-4xl font-bold">{portfolio.name}</h2>
-          <h3 className="mt-2 text-xl text-neutral-300">
+          <h2 className={cn("text-4xl font-bold", isDark && "text-white")}>
+            {portfolio.name}
+          </h2>
+          <h3
+            className={cn(
+              "mt-2 text-xl",
+              isDark ? "text-neutral-300" : "text-slate-600"
+            )}
+          >
             {portfolio.profession}
           </h3>
         </div>
@@ -221,7 +246,12 @@ function PortfolioView({
             type="button"
             onClick={onDownloadPdf}
             disabled={pdfLoading}
-            className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white disabled:text-neutral-500"
+            className={cn(
+              "rounded-2xl border px-5 py-3 font-semibold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed",
+              isDark
+                ? "border-neutral-700 bg-neutral-900 text-neutral-100 hover:border-cyan-400 hover:text-cyan-100 disabled:text-neutral-500"
+                : "border-gray-200 bg-white text-slate-700 shadow-sm hover:border-indigo-300 hover:text-indigo-700 disabled:text-gray-400"
+            )}
           >
             {pdfLoading ? "Preparing PDF..." : "Download PDF"}
           </button>
@@ -231,7 +261,7 @@ function PortfolioView({
               type="button"
               onClick={onSave}
               disabled={saveLoading}
-              className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold transition hover:bg-emerald-500 disabled:bg-neutral-700"
+              className="rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:shadow-cyan-500/30 disabled:translate-y-0 disabled:bg-neutral-700 disabled:from-neutral-700 disabled:to-neutral-700"
             >
               {saveLoading ? "Saving..." : "Save Portfolio"}
             </button>
@@ -239,14 +269,26 @@ function PortfolioView({
         </div>
       </div>
 
-      <p className="mt-6 leading-relaxed text-neutral-300">{portfolio.bio}</p>
+      <p
+        className={cn(
+          "mt-6 leading-relaxed",
+          isDark ? "text-neutral-300" : "text-slate-600"
+        )}
+      >
+        {portfolio.bio}
+      </p>
 
       <h3 className="mb-4 mt-8 text-2xl font-bold">Skills</h3>
       <div className="flex flex-wrap gap-2">
         {portfolio.skills?.map((skill, index) => (
           <span
             key={index}
-            className="rounded-full border border-indigo-500/30 bg-indigo-600/20 px-4 py-2 text-indigo-300"
+            className={cn(
+              "rounded-full border px-4 py-2 text-sm font-semibold",
+              isDark
+                ? "border-indigo-400/30 bg-indigo-500/15 text-indigo-200"
+                : "border-indigo-200 bg-indigo-50 text-indigo-700"
+            )}
           >
             {skill}
           </span>
@@ -258,16 +300,33 @@ function PortfolioView({
         {portfolio.projects?.map((project, index) => (
           <div
             key={index}
-            className="rounded-xl border border-neutral-700 bg-neutral-800 p-5"
+            className={cn(
+              "rounded-2xl border p-5 transition hover:-translate-y-0.5",
+              isDark
+                ? "border-neutral-700 bg-neutral-800/80 hover:border-indigo-400/50"
+                : "border-gray-200 bg-white shadow-sm hover:border-indigo-200 hover:shadow-md"
+            )}
           >
             <h4 className="text-xl font-semibold">{project.title}</h4>
-            <p className="mt-2 text-neutral-300">{project.description}</p>
+            <p
+              className={cn(
+                "mt-2",
+                isDark ? "text-neutral-300" : "text-slate-600"
+              )}
+            >
+              {project.description}
+            </p>
           </div>
         ))}
       </div>
 
       <h3 className="mb-4 mt-8 text-2xl font-bold">Contacts</h3>
-      <div className="space-y-1 text-neutral-300">
+      <div
+        className={cn(
+          "space-y-1",
+          isDark ? "text-neutral-300" : "text-slate-600"
+        )}
+      >
         <p>Email: {portfolio.contacts?.email || "Не указан"}</p>
         <p>GitHub: {portfolio.contacts?.github || "Не указан"}</p>
         <p>Phone: {portfolio.contacts?.phone || "Не указан"}</p>
@@ -278,6 +337,7 @@ function PortfolioView({
 
 function App() {
   const previewPdfRef = useRef(null);
+  const [theme, setTheme] = useState(getInitialTheme);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
@@ -289,6 +349,17 @@ function App() {
   const [listLoading, setListLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  const isDark = theme === "dark";
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  };
+
+  useEffect(() => {
+    window.localStorage.setItem("theme", theme);
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   const loadSavedPortfolios = useCallback(async (userId) => {
     setListLoading(true);
@@ -481,10 +552,26 @@ function App() {
     }
   };
 
+  const pageClass = isDark
+    ? "bg-neutral-950 text-white"
+    : "bg-slate-50 text-slate-950";
+  const cardClass = isDark
+    ? "border-neutral-800 bg-neutral-900/90 shadow-black/20"
+    : "border-gray-200 bg-white shadow-indigo-100/70";
+  const mutedTextClass = isDark ? "text-neutral-400" : "text-slate-500";
+  const inputClass = isDark
+    ? "border-neutral-700 bg-neutral-800 text-white placeholder:text-neutral-500 focus:border-cyan-400"
+    : "border-gray-200 bg-white text-slate-950 placeholder:text-slate-400 focus:border-indigo-400";
+
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-950 text-white">
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 px-6 py-4 text-neutral-300">
+      <div
+        className={cn(
+          "flex min-h-screen items-center justify-center transition-colors",
+          pageClass
+        )}
+      >
+        <div className={cn("rounded-2xl border px-6 py-4", cardClass)}>
           Проверка сессии...
         </div>
       </div>
@@ -492,38 +579,82 @@ function App() {
   }
 
   if (!session) {
-    return <Auth />;
+    return <Auth theme={theme} onToggleTheme={toggleTheme} />;
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 p-6 text-white">
+    <div
+      className={cn(
+        "min-h-screen overflow-hidden p-6 transition-colors",
+        pageClass
+      )}
+    >
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
+
       {portfolio && (
         <PdfPortfolio portfolio={portfolio} exportRef={previewPdfRef} />
       )}
 
-      <div className="mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-neutral-400">{session.user.email}</p>
-            <h1 className="text-4xl font-bold">AI Portfolio Generator</h1>
+            <p className={cn("text-sm", mutedTextClass)}>
+              {session.user.email}
+            </p>
+            <h1 className="text-4xl font-bold tracking-tight">
+              AI Portfolio Generator
+            </h1>
           </div>
 
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-red-400 hover:text-red-200"
-          >
-            Logout
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={cn(
+                "rounded-2xl border px-5 py-3 font-semibold transition hover:-translate-y-0.5",
+                isDark
+                  ? "border-neutral-700 bg-neutral-900 text-cyan-100 hover:border-cyan-400"
+                  : "border-gray-200 bg-white text-indigo-700 shadow-sm hover:border-indigo-300"
+              )}
+            >
+              {isDark ? "Light" : "Dark"}
+            </button>
+
+            <button
+              type="button"
+              onClick={logout}
+              className={cn(
+                "rounded-2xl border px-5 py-3 font-semibold transition hover:-translate-y-0.5",
+                isDark
+                  ? "border-neutral-700 bg-neutral-900 text-neutral-200 hover:border-red-400 hover:text-red-200"
+                  : "border-gray-200 bg-white text-slate-700 shadow-sm hover:border-red-300 hover:text-red-600"
+              )}
+            >
+              Logout
+            </button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
           <div className="space-y-6">
-            <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-              <h2 className="mb-4 text-2xl font-semibold">AI Assistant</h2>
+            <section
+              className={cn(
+                "rounded-3xl border p-6 shadow-xl transition",
+                cardClass
+              )}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">AI Assistant</h2>
+                <span className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-3 py-1 text-xs font-bold text-white">
+                  AI
+                </span>
+              </div>
 
               <textarea
-                className="h-64 w-full resize-none rounded-xl border border-neutral-700 bg-neutral-800 p-4 outline-none transition focus:border-indigo-500"
+                className={cn(
+                  "h-64 w-full resize-none rounded-2xl border p-4 outline-none transition",
+                  inputClass
+                )}
                 placeholder="Расскажите о себе, опыте, навыках, проектах..."
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
@@ -533,27 +664,44 @@ function App() {
                 type="button"
                 onClick={generatePortfolio}
                 disabled={loading || !prompt.trim()}
-                className="mt-4 w-full rounded-xl bg-indigo-600 py-3 font-semibold transition hover:bg-indigo-500 disabled:bg-neutral-700"
+                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 hover:shadow-indigo-500/30 disabled:translate-y-0 disabled:cursor-not-allowed disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-400"
               >
                 {loading ? "Генерация..." : "Generate Portfolio"}
               </button>
             </section>
 
-            <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+            <section
+              className={cn(
+                "rounded-3xl border p-6 shadow-xl transition",
+                cardClass
+              )}
+            >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-2xl font-semibold">My Portfolios</h2>
                 <button
                   type="button"
                   onClick={() => loadSavedPortfolios(session.user.id)}
                   disabled={listLoading}
-                  className="rounded-lg border border-neutral-700 px-3 py-2 text-sm text-neutral-300 transition hover:border-indigo-500 hover:text-white disabled:text-neutral-600"
+                  className={cn(
+                    "rounded-xl border px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed",
+                    isDark
+                      ? "border-neutral-700 text-neutral-300 hover:border-indigo-400 hover:text-white disabled:text-neutral-600"
+                      : "border-gray-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-700 disabled:text-gray-400"
+                  )}
                 >
                   {listLoading ? "Loading..." : "Refresh"}
                 </button>
               </div>
 
               {savedPortfolios.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-neutral-700 p-5 text-sm text-neutral-500">
+                <div
+                  className={cn(
+                    "rounded-2xl border border-dashed p-5 text-sm",
+                    isDark
+                      ? "border-neutral-700 text-neutral-500"
+                      : "border-gray-300 text-slate-500"
+                  )}
+                >
                   Сохранённые портфолио появятся здесь.
                 </div>
               ) : (
@@ -561,21 +709,26 @@ function App() {
                   {savedPortfolios.map((savedPortfolio) => (
                     <div
                       key={savedPortfolio.id}
-                      className={`rounded-xl border p-4 transition ${
+                      className={cn(
+                        "rounded-2xl border p-4 transition hover:-translate-y-0.5",
                         selectedPortfolioId === savedPortfolio.id
-                          ? "border-indigo-500 bg-indigo-500/10"
-                          : "border-neutral-800 bg-neutral-950/60"
-                      }`}
+                          ? isDark
+                            ? "border-indigo-400 bg-indigo-500/10"
+                            : "border-indigo-300 bg-indigo-50"
+                          : isDark
+                            ? "border-neutral-800 bg-neutral-950/60 hover:border-cyan-400/50"
+                            : "border-gray-200 bg-white hover:border-indigo-200 hover:shadow-md"
+                      )}
                     >
                       <button
                         type="button"
                         onClick={() => selectSavedPortfolio(savedPortfolio)}
                         className="block w-full text-left"
                       >
-                        <span className="block font-semibold text-white">
+                        <span className="block font-semibold">
                           {savedPortfolio.title}
                         </span>
-                        <span className="mt-1 block text-sm text-neutral-500">
+                        <span className={cn("mt-1 block text-sm", mutedTextClass)}>
                           {savedPortfolio.created_at
                             ? new Date(
                                 savedPortfolio.created_at
@@ -588,7 +741,12 @@ function App() {
                         type="button"
                         onClick={() => deletePortfolio(savedPortfolio.id)}
                         disabled={deleteLoadingId === savedPortfolio.id}
-                        className="mt-3 rounded-lg border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:border-neutral-700 disabled:text-neutral-500"
+                        className={cn(
+                          "mt-3 rounded-xl border px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed",
+                          isDark
+                            ? "border-red-500/30 text-red-200 hover:bg-red-500/10 disabled:border-neutral-700 disabled:text-neutral-500"
+                            : "border-red-200 text-red-600 hover:bg-red-50 disabled:border-gray-200 disabled:text-gray-400"
+                        )}
                       >
                         {deleteLoadingId === savedPortfolio.id
                           ? "Deleting..."
@@ -601,9 +759,21 @@ function App() {
             </section>
           </div>
 
-          <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+          <section
+            className={cn(
+              "rounded-3xl border p-6 shadow-xl transition",
+              cardClass
+            )}
+          >
             {!portfolio ? (
-              <div className="flex h-full min-h-80 items-center justify-center text-center text-neutral-500">
+              <div
+                className={cn(
+                  "flex h-full min-h-80 items-center justify-center rounded-2xl border border-dashed text-center",
+                  isDark
+                    ? "border-neutral-700 text-neutral-500"
+                    : "border-gray-300 text-slate-500"
+                )}
+              >
                 Здесь появится предпросмотр портфолио
               </div>
             ) : (
@@ -614,6 +784,7 @@ function App() {
                 onSave={savePortfolio}
                 pdfLoading={pdfLoading}
                 onDownloadPdf={handleDownloadPdf}
+                theme={theme}
               />
             )}
           </section>
