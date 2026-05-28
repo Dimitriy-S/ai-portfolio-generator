@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import html2pdf from "html2pdf.js";
 import Auth from "./Auth";
 import { supabase } from "./lib/supabase";
 
@@ -24,7 +25,107 @@ const getPortfolioTitle = (portfolio) =>
 const getPublicUrl = (slug) =>
   `${window.location.origin}${PUBLIC_PORTFOLIO_PREFIX}${slug}`;
 
-function PortfolioView({ portfolio, showSaveButton, saveLoading, onSave }) {
+const downloadPdf = async (element, portfolio) => {
+  if (!element) {
+    return;
+  }
+
+  const fileName = `${createSlug(getPortfolioTitle(portfolio))}.pdf`;
+
+  await html2pdf()
+    .set({
+      margin: 0,
+      filename: fileName,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    })
+    .from(element)
+    .save();
+};
+
+function PdfPortfolio({ portfolio, exportRef }) {
+  return (
+    <div className="fixed -left-[9999px] top-0">
+      <div
+        ref={exportRef}
+        className="w-[794px] bg-white px-14 py-12 font-sans text-neutral-950"
+      >
+        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-indigo-700">
+          {portfolio.theme || "Portfolio"}
+        </p>
+        <h1 className="text-4xl font-bold leading-tight">
+          {portfolio.name || "Untitled Portfolio"}
+        </h1>
+        <h2 className="mt-2 text-xl font-semibold text-neutral-600">
+          {portfolio.profession}
+        </h2>
+
+        <section className="mt-8">
+          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+            About
+          </h3>
+          <p className="text-base leading-7 text-neutral-700">{portfolio.bio}</p>
+        </section>
+
+        <section className="mt-8">
+          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+            Skills
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {portfolio.skills?.map((skill, index) => (
+              <span
+                key={index}
+                className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-800"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+            Projects
+          </h3>
+          <div className="space-y-4">
+            {portfolio.projects?.map((project, index) => (
+              <div
+                key={index}
+                className="rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+              >
+                <h4 className="text-lg font-bold">{project.title}</h4>
+                <p className="mt-2 text-sm leading-6 text-neutral-700">
+                  {project.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h3 className="mb-3 border-b border-neutral-200 pb-2 text-xl font-bold">
+            Contacts
+          </h3>
+          <div className="space-y-1 text-base text-neutral-700">
+            <p>Email: {portfolio.contacts?.email || "Not specified"}</p>
+            <p>GitHub: {portfolio.contacts?.github || "Not specified"}</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioView({
+  portfolio,
+  showSaveButton,
+  saveLoading,
+  onSave,
+  pdfLoading,
+  onDownloadPdf,
+}) {
   return (
     <div>
       <div className="mb-6 flex flex-col gap-4 border-b border-neutral-800 pb-6 sm:flex-row sm:items-start sm:justify-between">
@@ -36,16 +137,27 @@ function PortfolioView({ portfolio, showSaveButton, saveLoading, onSave }) {
           </h3>
         </div>
 
-        {showSaveButton && (
+        <div className="flex flex-col gap-3 sm:items-end">
           <button
             type="button"
-            onClick={onSave}
-            disabled={saveLoading}
-            className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold transition hover:bg-emerald-500 disabled:bg-neutral-700"
+            onClick={onDownloadPdf}
+            disabled={pdfLoading}
+            className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white disabled:text-neutral-500"
           >
-            {saveLoading ? "Saving..." : "Save Portfolio"}
+            {pdfLoading ? "Preparing PDF..." : "Download PDF"}
           </button>
-        )}
+
+          {showSaveButton && (
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saveLoading}
+              className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold transition hover:bg-emerald-500 disabled:bg-neutral-700"
+            >
+              {saveLoading ? "Saving..." : "Save Portfolio"}
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="mt-6 leading-relaxed text-neutral-300">{portfolio.bio}</p>
@@ -85,6 +197,22 @@ function PortfolioView({ portfolio, showSaveButton, saveLoading, onSave }) {
 }
 
 function PublicPortfolioPage({ portfolio, loading, error, onCopy }) {
+  const publicPdfRef = useRef(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    setPdfLoading(true);
+
+    try {
+      await downloadPdf(publicPdfRef.current, portfolio.data);
+    } catch (error) {
+      console.error(error);
+      alert("Не удалось скачать PDF.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
@@ -110,6 +238,8 @@ function PublicPortfolioPage({ portfolio, loading, error, onCopy }) {
 
   return (
     <div className="min-h-screen bg-neutral-950 px-6 py-10 text-white">
+      <PdfPortfolio portfolio={portfolio.data} exportRef={publicPdfRef} />
+
       <main className="mx-auto max-w-5xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -119,17 +249,32 @@ function PublicPortfolioPage({ portfolio, loading, error, onCopy }) {
             <h1 className="mt-2 text-4xl font-bold">AI Portfolio Generator</h1>
           </div>
 
-          <button
-            type="button"
-            onClick={onCopy}
-            className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white"
-          >
-            Copy Public Link
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={pdfLoading}
+              className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white disabled:text-neutral-500"
+            >
+              {pdfLoading ? "Preparing PDF..." : "Download PDF"}
+            </button>
+            <button
+              type="button"
+              onClick={onCopy}
+              className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white"
+            >
+              Copy Public Link
+            </button>
+          </div>
         </div>
 
         <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl shadow-black/30">
-          <PortfolioView portfolio={portfolio.data} showSaveButton={false} />
+          <PortfolioView
+            portfolio={portfolio.data}
+            showSaveButton={false}
+            pdfLoading={pdfLoading}
+            onDownloadPdf={handleDownloadPdf}
+          />
         </section>
       </main>
     </div>
@@ -146,6 +291,7 @@ function App() {
       )
     : "";
 
+  const previewPdfRef = useRef(null);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
@@ -160,6 +306,7 @@ function App() {
   const [listLoading, setListLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [publishLoadingId, setPublishLoadingId] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const loadSavedPortfolios = useCallback(async (userId) => {
     setListLoading(true);
@@ -386,6 +533,23 @@ function App() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!portfolio) {
+      return;
+    }
+
+    setPdfLoading(true);
+
+    try {
+      await downloadPdf(previewPdfRef.current, portfolio);
+    } catch (error) {
+      console.error(error);
+      alert("Не удалось скачать PDF.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   const deletePortfolio = async (portfolioId) => {
     if (!session?.user?.id) {
       return;
@@ -456,6 +620,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 p-6 text-white">
+      {portfolio && (
+        <PdfPortfolio portfolio={portfolio} exportRef={previewPdfRef} />
+      )}
+
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -598,6 +766,8 @@ function App() {
                 showSaveButton
                 saveLoading={saveLoading}
                 onSave={savePortfolio}
+                pdfLoading={pdfLoading}
+                onDownloadPdf={handleDownloadPdf}
               />
             )}
           </section>
