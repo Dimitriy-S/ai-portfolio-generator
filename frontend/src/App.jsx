@@ -4,26 +4,11 @@ import Auth from "./Auth";
 import { supabase } from "./lib/supabase";
 
 const API_URL = "https://ai-portfolio-backend-gz83.onrender.com";
-const PUBLIC_PORTFOLIO_PREFIX = "/portfolio/";
-
-const createSlug = (source) => {
-  const base = source
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return `${base || "portfolio"}-${Date.now()}`;
-};
 
 const getPortfolioTitle = (portfolio) =>
   portfolio?.name?.trim() ||
   portfolio?.profession?.trim() ||
   "Untitled Portfolio";
-
-const getPublicUrl = (slug) =>
-  `${window.location.origin}${PUBLIC_PORTFOLIO_PREFIX}${slug}`;
 
 const downloadPdf = async (pdfRef) => {
   const element = pdfRef.current;
@@ -101,12 +86,12 @@ function PdfPortfolio({ portfolio, exportRef }) {
               margin: "12px 0 0",
             }}
           >
-            Email: {portfolio.contacts?.email || "Not specified"} · GitHub:{" "}
+            Email: {portfolio.contacts?.email || "Not specified"} - GitHub:{" "}
             {portfolio.contacts?.github || "Not specified"}
           </p>
         </div>
 
-        <div style={{ marginTop: "0" }}>
+        <div>
           <h3
             style={{
               borderBottom: "1px solid #e5e7eb",
@@ -161,12 +146,7 @@ function PdfPortfolio({ portfolio, exportRef }) {
           </h3>
           <div>
             {portfolio.projects?.map((project, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "18px",
-                }}
-              >
+              <div key={index} style={{ marginBottom: "18px" }}>
                 <h4
                   style={{
                     color: "#111111",
@@ -292,101 +272,7 @@ function PortfolioView({
   );
 }
 
-function PublicPortfolioPage({ portfolio, loading, error, onCopy }) {
-  const publicPdfRef = useRef(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
-
-  const handleDownloadPdf = async () => {
-    setPdfLoading(true);
-
-    try {
-      await downloadPdf(publicPdfRef);
-    } catch (error) {
-      console.error("PDF export error:", error);
-      alert("Не удалось создать PDF");
-    } finally {
-      setPdfLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 px-6 py-4 text-neutral-300">
-          Loading public portfolio...
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !portfolio) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="max-w-lg rounded-2xl border border-neutral-800 bg-neutral-900 p-8 text-center">
-          <h1 className="text-3xl font-bold">Portfolio not found</h1>
-          <p className="mt-3 text-neutral-400">
-            This public portfolio is unavailable or has been made private.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-neutral-950 px-6 py-10 text-white">
-      <PdfPortfolio portfolio={portfolio.data} exportRef={publicPdfRef} />
-
-      <main className="mx-auto max-w-5xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-400">
-              Public Portfolio
-            </p>
-            <h1 className="mt-2 text-4xl font-bold">AI Portfolio Generator</h1>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              disabled={pdfLoading}
-              className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white disabled:text-neutral-500"
-            >
-              {pdfLoading ? "Preparing PDF..." : "Download PDF"}
-            </button>
-            <button
-              type="button"
-              onClick={onCopy}
-              className="rounded-xl border border-neutral-700 px-5 py-3 font-semibold text-neutral-200 transition hover:border-indigo-500 hover:text-white"
-            >
-              Copy Public Link
-            </button>
-          </div>
-        </div>
-
-        <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl shadow-black/30">
-          <PortfolioView
-            portfolio={portfolio.data}
-            showSaveButton={false}
-            pdfLoading={pdfLoading}
-            onDownloadPdf={handleDownloadPdf}
-          />
-        </section>
-      </main>
-    </div>
-  );
-}
-
 function App() {
-  const isPublicRoute = window.location.pathname.startsWith(
-    PUBLIC_PORTFOLIO_PREFIX
-  );
-  const publicSlug = isPublicRoute
-    ? decodeURIComponent(
-        window.location.pathname.slice(PUBLIC_PORTFOLIO_PREFIX.length)
-      )
-    : "";
-
   const previewPdfRef = useRef(null);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -394,14 +280,10 @@ function App() {
   const [portfolio, setPortfolio] = useState(null);
   const [savedPortfolios, setSavedPortfolios] = useState([]);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
-  const [publicPortfolio, setPublicPortfolio] = useState(null);
-  const [publicLoading, setPublicLoading] = useState(isPublicRoute);
-  const [publicError, setPublicError] = useState("");
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
-  const [publishLoadingId, setPublishLoadingId] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const loadSavedPortfolios = useCallback(async (userId) => {
@@ -410,7 +292,7 @@ function App() {
     try {
       const { data, error } = await supabase
         .from("portfolios")
-        .select("id,title,data,created_at,is_public,slug")
+        .select("id,title,data,created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
@@ -428,43 +310,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isPublicRoute) {
-      return;
-    }
-
-    const loadPublicPortfolio = async () => {
-      setPublicLoading(true);
-      setPublicError("");
-
-      try {
-        const { data, error } = await supabase
-          .from("portfolios")
-          .select("title,data,created_at,slug,is_public")
-          .eq("slug", publicSlug)
-          .eq("is_public", true)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        setPublicPortfolio(data);
-      } catch (error) {
-        console.error(error);
-        setPublicError("Portfolio not found.");
-      } finally {
-        setPublicLoading(false);
-      }
-    };
-
-    loadPublicPortfolio();
-  }, [isPublicRoute, publicSlug]);
-
-  useEffect(() => {
-    if (isPublicRoute) {
-      return undefined;
-    }
-
     let isMounted = true;
 
     const loadSession = async () => {
@@ -508,7 +353,7 @@ function App() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [isPublicRoute, loadSavedPortfolios]);
+  }, [loadSavedPortfolios]);
 
   const generatePortfolio = async () => {
     setLoading(true);
@@ -550,7 +395,7 @@ function App() {
           title,
           data: portfolio,
         })
-        .select("id,title,data,created_at,is_public,slug")
+        .select("id,title,data,created_at")
         .single();
 
       if (error) {
@@ -570,63 +415,6 @@ function App() {
   const selectSavedPortfolio = (savedPortfolio) => {
     setPortfolio(savedPortfolio.data);
     setSelectedPortfolioId(savedPortfolio.id);
-  };
-
-  const togglePublicPortfolio = async (savedPortfolio) => {
-    if (!session?.user?.id) {
-      return;
-    }
-
-    setPublishLoadingId(savedPortfolio.id);
-
-    try {
-      const isMakingPublic = !savedPortfolio.is_public;
-      const nextSlug =
-        savedPortfolio.slug ||
-        createSlug(
-          savedPortfolio.title ||
-            savedPortfolio.data?.name ||
-            savedPortfolio.data?.profession ||
-            "portfolio"
-        );
-
-      const updatePayload = isMakingPublic
-        ? { is_public: true, slug: nextSlug }
-        : { is_public: false };
-
-      const { data, error } = await supabase
-        .from("portfolios")
-        .update(updatePayload)
-        .eq("id", savedPortfolio.id)
-        .eq("user_id", session.user.id)
-        .select("id,title,data,created_at,is_public,slug")
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      setSavedPortfolios((current) =>
-        current.map((portfolioItem) =>
-          portfolioItem.id === savedPortfolio.id ? data : portfolioItem
-        )
-      );
-    } catch (error) {
-      console.error(error);
-      alert("Не удалось изменить публичность портфолио.");
-    } finally {
-      setPublishLoadingId(null);
-    }
-  };
-
-  const copyPublicLink = async (slug) => {
-    try {
-      await navigator.clipboard.writeText(getPublicUrl(slug));
-      alert("Public link copied.");
-    } catch (error) {
-      console.error(error);
-      alert("Не удалось скопировать ссылку.");
-    }
   };
 
   const handleDownloadPdf = async () => {
@@ -688,17 +476,6 @@ function App() {
       alert("Не удалось выйти из аккаунта.");
     }
   };
-
-  if (isPublicRoute) {
-    return (
-      <PublicPortfolioPage
-        portfolio={publicPortfolio}
-        loading={publicLoading}
-        error={publicError}
-        onCopy={() => copyPublicLink(publicSlug)}
-      />
-    );
-  }
 
   if (authLoading) {
     return (
@@ -803,47 +580,16 @@ function App() {
                         </span>
                       </button>
 
-                      {savedPortfolio.is_public && savedPortfolio.slug && (
-                        <div className="mt-3 rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-3 text-sm text-indigo-100">
-                          <p className="break-all">
-                            {PUBLIC_PORTFOLIO_PREFIX}
-                            {savedPortfolio.slug}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => copyPublicLink(savedPortfolio.slug)}
-                            className="mt-2 font-semibold text-indigo-300 transition hover:text-indigo-100"
-                          >
-                            Copy Public Link
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => togglePublicPortfolio(savedPortfolio)}
-                          disabled={publishLoadingId === savedPortfolio.id}
-                          className="rounded-lg border border-emerald-500/30 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/10 disabled:border-neutral-700 disabled:text-neutral-500"
-                        >
-                          {publishLoadingId === savedPortfolio.id
-                            ? "Updating..."
-                            : savedPortfolio.is_public
-                              ? "Make Private"
-                              : "Make Public"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deletePortfolio(savedPortfolio.id)}
-                          disabled={deleteLoadingId === savedPortfolio.id}
-                          className="rounded-lg border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:border-neutral-700 disabled:text-neutral-500"
-                        >
-                          {deleteLoadingId === savedPortfolio.id
-                            ? "Deleting..."
-                            : "Delete"}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deletePortfolio(savedPortfolio.id)}
+                        disabled={deleteLoadingId === savedPortfolio.id}
+                        className="mt-3 rounded-lg border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:border-neutral-700 disabled:text-neutral-500"
+                      >
+                        {deleteLoadingId === savedPortfolio.id
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
                     </div>
                   ))}
                 </div>

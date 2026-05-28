@@ -26,8 +26,6 @@ Main responsibilities:
 - Display generated portfolio previews
 - Save generated portfolios to Supabase
 - Show saved portfolios for the current user
-- Publish and unpublish portfolio pages
-- Render public portfolio pages by slug
 - Export portfolios to PDF on the client
 
 ## Backend
@@ -50,8 +48,6 @@ The `portfolios` table stores:
 - `user_id` for ownership
 - `title` for display in the saved portfolio list
 - `data` as the full generated portfolio object
-- `is_public` for public visibility
-- `slug` for public page routing
 - `created_at` for ordering and display
 
 ## AI Integration
@@ -79,20 +75,6 @@ Flow:
 4. If a session exists, the generator UI is shown.
 5. If no session exists, the auth screen is shown.
 6. Saved portfolios are queried using the current user's `user.id`.
-
-## Public Portfolio System
-
-Public pages are implemented on the frontend without React Router.
-
-Flow:
-
-1. User clicks `Make Public` for a saved portfolio.
-2. React generates a unique slug from the portfolio title, name, or profession.
-3. Supabase updates the portfolio with `is_public = true` and the generated `slug`.
-4. Public links use `/portfolio/{slug}`.
-5. When the app loads on a `/portfolio/` path, React reads `window.location.pathname`.
-6. React loads the public portfolio from Supabase by `slug` and `is_public = true`.
-7. The public page renders without the auth form or generator panel.
 
 ## PDF Export System
 
