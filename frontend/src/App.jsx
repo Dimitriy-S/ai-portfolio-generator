@@ -87,7 +87,8 @@ function PdfPortfolio({ portfolio, exportRef }) {
             }}
           >
             Email: {portfolio.contacts?.email || "Not specified"} - GitHub:{" "}
-            {portfolio.contacts?.github || "Not specified"}
+            {portfolio.contacts?.github || "Not specified"} - Phone:{" "}
+            {portfolio.contacts?.phone || "Not specified"}
           </p>
         </div>
 
@@ -184,8 +185,11 @@ function PdfPortfolio({ portfolio, exportRef }) {
             <p style={{ margin: "0 0 4px" }}>
               Email: {portfolio.contacts?.email || "Not specified"}
             </p>
-            <p style={{ margin: 0 }}>
+            <p style={{ margin: "0 0 4px" }}>
               GitHub: {portfolio.contacts?.github || "Not specified"}
+            </p>
+            <p style={{ margin: 0 }}>
+              Phone: {portfolio.contacts?.phone || "Not specified"}
             </p>
           </div>
         </div>
@@ -267,6 +271,7 @@ function PortfolioView({
       <div className="space-y-1 text-neutral-300">
         <p>Email: {portfolio.contacts?.email || "Не указан"}</p>
         <p>GitHub: {portfolio.contacts?.github || "Не указан"}</p>
+        <p>Phone: {portfolio.contacts?.phone || "Не указан"}</p>
       </div>
     </div>
   );

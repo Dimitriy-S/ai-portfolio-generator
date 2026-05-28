@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "./lib/supabase";
+
+const validatePassword = (password) => ({
+  hasValidLength: password.length >= 10 && password.length <= 50,
+  hasUppercase: /[A-ZА-ЯЁ]/.test(password),
+  hasDigit: /\d/.test(password),
+});
 
 function Auth() {
   const [mode, setMode] = useState("login");
@@ -10,12 +16,32 @@ function Auth() {
   const [error, setError] = useState("");
 
   const isLogin = mode === "login";
+  const passwordChecks = useMemo(() => validatePassword(password), [password]);
+  const isPasswordValid =
+    passwordChecks.hasValidLength &&
+    passwordChecks.hasUppercase &&
+    passwordChecks.hasDigit;
+  const isSubmitDisabled = loading || (!isLogin && !isPasswordValid);
+
+  const switchMode = (nextMode) => {
+    setMode(nextMode);
+    setMessage("");
+    setError("");
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setLoading(true);
     setMessage("");
     setError("");
+
+    if (!isLogin && !isPasswordValid) {
+      setError(
+        "Пароль должен содержать 10–50 символов, минимум 1 заглавную букву и минимум 1 цифру."
+      );
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const credentials = {
@@ -32,7 +58,9 @@ function Auth() {
       }
 
       if (!isLogin) {
-        setMessage("Регистрация успешна. Если включено подтверждение email, проверьте почту.");
+        setMessage(
+          "Регистрация успешна. Если включено подтверждение email, проверьте почту."
+        );
       }
     } catch (authError) {
       setError(authError.message || "Не удалось выполнить действие.");
@@ -42,7 +70,7 @@ function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white px-6 py-10">
+    <div className="min-h-screen bg-neutral-950 px-6 py-10 text-white">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center">
         <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-[1fr_440px]">
           <section className="flex flex-col justify-center">
@@ -62,7 +90,7 @@ function Auth() {
             <div className="mb-6 flex rounded-xl bg-neutral-950 p-1">
               <button
                 type="button"
-                onClick={() => setMode("login")}
+                onClick={() => switchMode("login")}
                 className={`w-1/2 rounded-lg py-2 text-sm font-semibold transition ${
                   isLogin
                     ? "bg-indigo-600 text-white"
@@ -73,7 +101,7 @@ function Auth() {
               </button>
               <button
                 type="button"
-                onClick={() => setMode("register")}
+                onClick={() => switchMode("register")}
                 className={`w-1/2 rounded-lg py-2 text-sm font-semibold transition ${
                   !isLogin
                     ? "bg-indigo-600 text-white"
@@ -115,11 +143,55 @@ function Auth() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
-                  minLength={6}
-                  className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-3 outline-none transition focus:border-indigo-500"
-                  placeholder="Минимум 6 символов"
+                  minLength={isLogin ? 1 : 10}
+                  maxLength={50}
+                  className={`w-full rounded-xl border bg-neutral-800 px-4 py-3 outline-none transition ${
+                    !isLogin && password && !isPasswordValid
+                      ? "border-red-500 focus:border-red-400"
+                      : "border-neutral-700 focus:border-indigo-500"
+                  }`}
+                  placeholder={
+                    isLogin ? "Введите пароль" : "Минимум 10 символов"
+                  }
                 />
               </label>
+
+              {!isLogin && (
+                <div className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-4 text-sm text-neutral-300">
+                  <p className="font-medium text-neutral-200">
+                    Пароль должен содержать:
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    <li
+                      className={
+                        passwordChecks.hasValidLength
+                          ? "text-emerald-300"
+                          : "text-neutral-400"
+                      }
+                    >
+                      10–50 символов
+                    </li>
+                    <li
+                      className={
+                        passwordChecks.hasUppercase
+                          ? "text-emerald-300"
+                          : "text-neutral-400"
+                      }
+                    >
+                      минимум 1 заглавную букву
+                    </li>
+                    <li
+                      className={
+                        passwordChecks.hasDigit
+                          ? "text-emerald-300"
+                          : "text-neutral-400"
+                      }
+                    >
+                      минимум 1 цифру
+                    </li>
+                  </ul>
+                </div>
+              )}
 
               {error && (
                 <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -135,8 +207,8 @@ function Auth() {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-indigo-600 py-3 font-semibold transition hover:bg-indigo-500 disabled:bg-neutral-700"
+                disabled={isSubmitDisabled}
+                className="w-full rounded-xl bg-indigo-600 py-3 font-semibold transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-400"
               >
                 {loading ? "Подождите..." : isLogin ? "Login" : "Create account"}
               </button>

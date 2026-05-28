@@ -60,7 +60,8 @@ def generate_portfolio(prompt: str):
   ],
   "contacts": {
     "email": "",
-    "github": ""
+    "github": "",
+    "phone": ""
   },
   "theme": ""
 }
