@@ -652,17 +652,17 @@ function App() {
   return (
     <div
       className={cn(
-        "min-h-screen overflow-hidden p-6 transition-colors",
+        "min-h-screen transition-colors",
         pageClass
       )}
     >
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
+      <div className="pointer-events-none sticky top-0 z-50 h-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400" />
 
       {portfolio && (
         <PdfPortfolio portfolio={portfolio} exportRef={previewPdfRef} />
       )}
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-7xl px-6 pb-6 pt-7">
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className={cn("text-sm", mutedTextClass)}>
@@ -744,7 +744,7 @@ function App() {
 
               <textarea
                 className={cn(
-                  "h-64 w-full resize-none rounded-2xl border p-4 outline-none transition",
+                  "app-scrollbar h-64 w-full resize-none rounded-2xl border p-4 outline-none transition",
                   inputClass
                 )}
                 placeholder="Расскажите о себе, опыте, навыках, проектах..."
