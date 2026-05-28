@@ -25,17 +25,15 @@ const getPortfolioTitle = (portfolio) =>
 const getPublicUrl = (slug) =>
   `${window.location.origin}${PUBLIC_PORTFOLIO_PREFIX}${slug}`;
 
-const downloadPdf = async (element, portfolio) => {
+const downloadPdf = async (element) => {
   if (!element) {
     return;
   }
 
-  const fileName = `${createSlug(getPortfolioTitle(portfolio))}.pdf`;
-
   await html2pdf()
     .set({
       margin: 0,
-      filename: fileName,
+      filename: "portfolio.pdf",
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
@@ -204,10 +202,11 @@ function PublicPortfolioPage({ portfolio, loading, error, onCopy }) {
     setPdfLoading(true);
 
     try {
-      await downloadPdf(publicPdfRef.current, portfolio.data);
+      const element = publicPdfRef.current;
+      await downloadPdf(element);
     } catch (error) {
       console.error(error);
-      alert("Не удалось скачать PDF.");
+      alert("Не удалось создать PDF");
     } finally {
       setPdfLoading(false);
     }
@@ -541,10 +540,11 @@ function App() {
     setPdfLoading(true);
 
     try {
-      await downloadPdf(previewPdfRef.current, portfolio);
+      const element = previewPdfRef.current;
+      await downloadPdf(element);
     } catch (error) {
       console.error(error);
-      alert("Не удалось скачать PDF.");
+      alert("Не удалось создать PDF");
     } finally {
       setPdfLoading(false);
     }
